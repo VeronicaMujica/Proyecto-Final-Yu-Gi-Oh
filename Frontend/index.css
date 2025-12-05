@@ -1,0 +1,412 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at top, #1e293b, #020617);
+  color: #e5e7eb;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  padding: 0;
+}
+
+.app {
+  width: 1200px;
+  max-width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.app-header {
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 16px;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+}
+
+.app-header p {
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.board {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 10px;
+}
+
+.zone {
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 16px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  position: relative;
+  overflow: hidden;
+}
+
+.zone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.15), transparent 55%);
+  opacity: 0.7;
+}
+
+.zone-player::before {
+  background: radial-gradient(circle at bottom right, rgba(52, 211, 153, 0.18), transparent 55%);
+}
+
+.zone-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1;
+}
+
+.zone-header h2 {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fbbf24;
+}
+
+.life-points {
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  font-size: 0.85rem;
+}
+
+.field-row,
+.hand-row,
+.deck-row {
+  z-index: 1;
+}
+
+.field-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.monster-zone {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(90px, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+
+.hand-row {
+  display: flex;
+  justify-content: center;
+}
+
+.hand {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 8px;
+  min-height: 190px;
+}
+
+.hand-opponent {
+  filter: blur(3px);
+  transition: filter 0.2s ease;
+}
+
+.hand-opponent.debug-visible {
+  filter: none;
+}
+
+/* Deck + preview de mazo */
+
+.deck-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-right: 8px;
+}
+
+.deck-stack {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.deck-card {
+  width: 60px;
+  height: 88px;
+  border-radius: 8px;
+  background: linear-gradient(145deg, #1f2937, #111827);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+.deck-card.back {
+  background-image: linear-gradient(135deg, #0ea5e9, #6366f1);
+}
+
+.deck-count {
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.deck-preview-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deck-preview-wrapper small {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.deck-preview {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel {
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 16px;
+  padding: 8px 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+}
+
+.panel h3 {
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+
+.btn {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #0ea5e9, #3b82f6);
+  color: white;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.5);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.7);
+}
+
+.btn:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #4b5563, #6b7280);
+  box-shadow: 0 10px 22px rgba(55, 65, 81, 0.6);
+}
+
+.log {
+  max-height: 220px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.log-entry {
+  margin-bottom: 4px;
+  color: #9ca3af;
+}
+
+/* Cartas principales (mano y campo) */
+
+.card {
+  width: 120px;
+  height: 176px;
+  border-radius: 12px;
+  background: radial-gradient(circle at top, #1f2937, #020617);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.85);
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.card:hover {
+  transform: translateY(-8px) scale(1.06);
+  box-shadow: 0 24px 50px rgba(56, 189, 248, 0.8);
+}
+
+.card-image {
+  width: 100%;
+  height: 65%;
+  background-size: cover;
+  background-position: center;
+}
+
+.card-info {
+  padding: 6px;
+  font-size: 0.7rem;
+}
+
+.card-name {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.card-type {
+  font-size: 0.6rem;
+  color: #a5b4fc;
+}
+
+/* Cartas mini para preview de mazo */
+
+.card.card-mini {
+  width: 70px;
+  height: 104px;
+  border-radius: 8px;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.7);
+}
+
+.card.card-mini .card-info {
+  padding: 3px;
+  font-size: 0.55rem;
+}
+
+.card.card-mini .card-name {
+  font-size: 0.55rem;
+}
+
+.card.card-mini .card-stats {
+  font-size: 0.55rem;
+}
+
+.card.card-mini .card-type {
+  font-size: 0.5rem;
+}
+
+.card.card-mini:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 14px 28px rgba(56, 189, 248, 0.6);
+}
+
+/* Animación de aparición */
+.card.enter {
+  transform: translateY(12px) scale(0.9);
+  opacity: 0;
+  animation: cardEnter 0.25s ease-out forwards;
+}
+
+@keyframes cardEnter {
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.card-slot {
+  width: 120px;
+  height: 176px;
+  border-radius: 12px;
+  border: 1px dashed rgba(148, 163, 184, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+
+.card-slot.has-card {
+  border-style: solid;
+  opacity: 1;
+}
+
+.card.selected {
+  outline: 2px solid #facc15;
+  outline-offset: 2px;
+  transform: translateY(-4px) scale(1.03);
+}
+
+@keyframes cardAttack {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-12px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card.attacking {
+  animation: cardAttack 0.25s ease-out;
+}
+
+.damage-fx {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.2);
+  font-size: 4rem;
+  font-weight: 900;
+  color: #ef4444;
+  text-shadow: 0 0 20px rgba(239, 68, 68, 0.9);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.3s ease;
+  z-index: 9999;
+}
+
+.damage-fx.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
