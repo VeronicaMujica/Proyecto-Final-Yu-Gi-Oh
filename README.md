@@ -1,4 +1,4 @@
-# 🃏 **Yu-Gi-Oh! Minimax Web**
+# 🃏 **Yu-Gi-Oh! Minimax**
 Juego de cartas inspirado en **Yu-Gi-Oh! Forbidden Memories** con **IA Minimax**.
 
 ---
