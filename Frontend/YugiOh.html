@@ -52,6 +52,24 @@
           <p id="turn-info">Jugador</p>
         </div>
 
+        <!-- 🔽 NUEVO PANEL: CONFIGURACIÓN DE MAZO -->
+        <div class="panel">
+          <h3>Configuración de mazo</h3>
+          <label for="deck-size-input" style="font-size: 0.8rem; color: #9ca3af;">
+            Cartas por mazo (15 - 40)
+          </label>
+          <input
+            id="deck-size-input"
+            type="number"
+            min="15"
+            max="40"
+            value="20"
+            style="margin-top: 4px; margin-bottom: 6px; width: 100%; padding: 4px 8px; border-radius: 999px; border: 1px solid #4b5563; background:#020617; color:#e5e7eb;"
+          />
+          <button id="btn-start-game" class="btn">Iniciar duelo</button>
+        </div>
+        <!-- 🔼 FIN NUEVO PANEL -->
+
         <div class="panel">
           <h3>Acciones</h3>
           <button id="btn-end-turn" class="btn">Terminar turno</button>
@@ -102,16 +120,17 @@
   <script src="C:\Users\Administrador\Desktop\Proyecto-Final-Yu-Gi-Oh\Frontend\js\game.js"></script>
  
   <div id="damage-fx" class="damage-fx"></div>
+
   <div id="end-modal" class="modal">
-  <div class="modal-content">
-    <h2>Partida terminada</h2>
-    <p id="end-result"></p>
-    <p id="end-lp"></p>
-    <div class="modal-actions">
-      <button id="btn-play-again" class="btn">Jugar otra vez</button>
-      <button id="btn-exit" class="btn btn-secondary">Salir</button>
+    <div class="modal-content">
+      <h2>Partida terminada</h2>
+      <p id="end-result"></p>
+      <p id="end-lp"></p>
+      <div class="modal-actions">
+        <button id="btn-play-again" class="btn">Jugar otra vez</button>
+        <button id="btn-exit" class="btn btn-secondary">Salir</button>
+      </div>
     </div>
   </div>
-</div>
 </body>
 </html>

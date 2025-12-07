@@ -4,6 +4,8 @@ const MAX_MONSTER_SLOTS = 5;
 const DEFAULT_DECK_SIZE = 20; // configurable (máximo 40)
 const INITIAL_HAND_SIZE = 5;
 
+let currentDeckSize = DEFAULT_DECK_SIZE;
+
 const gameState = {
   turn: 'player', // 'player' | 'ai' | 'ended'
   phase: 'main',
@@ -87,6 +89,107 @@ function showEndModal(winner) {
   lpEl.textContent = `LP Jugador: ${gameState.player.life}   |   LP IA: ${gameState.ai.life}`;
 
   modal.classList.add('show');
+}
+
+/**
+ * Construye un estado serializable para enviar al backend Python.
+ * No envía funciones ni referencias de DOM, solo datos.
+ */
+function buildSerializableState() {
+  return {
+    turn: gameState.turn,
+    phase: gameState.phase,
+    player: {
+      life: gameState.player.life,
+      deck: [...gameState.player.deck],
+      hand: [...gameState.player.hand],
+      field: [...gameState.player.field],
+    },
+    ai: {
+      life: gameState.ai.life,
+      deck: [...gameState.ai.deck],
+      hand: [...gameState.ai.hand],
+      field: [...gameState.ai.field],
+    },
+  };
+}
+
+/**
+ * Aplica la decisión de la IA devuelta por el backend.
+ * Estructura esperada (JSON):
+ * {
+ *   "summon": { "card": "ID_CARTA", "slot": 2 } | null,
+ *   "battle_phase": true/false
+ * }
+ */
+function applyAIDecision(decision) {
+  if (!decision) return;
+
+  // SUMMON
+  if (decision.summon && decision.summon.card) {
+    const { card, slot } = decision.summon;
+
+    // quitar carta de la mano de la IA
+    const idx = gameState.ai.hand.indexOf(card);
+    if (idx !== -1) {
+      gameState.ai.hand.splice(idx, 1);
+    }
+
+    // si no hay slot definido o está ocupado, buscamos el primero libre
+    let targetSlot = slot;
+    if (
+      typeof targetSlot !== 'number' ||
+      targetSlot < 0 ||
+      targetSlot >= MAX_MONSTER_SLOTS ||
+      gameState.ai.field[targetSlot]
+    ) {
+      targetSlot = gameState.ai.field.findIndex((c) => !c);
+    }
+
+    if (targetSlot !== -1) {
+      gameState.ai.field[targetSlot] = card;
+      logMessage(`La IA invoca ${CARD_BY_ID[card].name}.`);
+    } else {
+      logMessage('La IA intentó invocar, pero no tiene espacio en el campo.');
+    }
+  }
+
+  // FASE DE BATALLA
+  if (decision.battle_phase) {
+    resolveBattlePhase('ai');
+  }
+}
+
+/**
+ * Fallback en JS por si el backend Python falla.
+ * Equivale más o menos a tu IA anterior: invoca la carta con más ATK y ataca.
+ */
+function fallbackLocalAIDecision() {
+  const field = gameState.ai.field;
+  const hand = gameState.ai.hand;
+  const firstEmptyIndex = field.findIndex((c) => !c);
+
+  let summon = null;
+
+  if (firstEmptyIndex !== -1 && hand.length > 0) {
+    let bestIdx = 0;
+    let bestAtk = -Infinity;
+    hand.forEach((cardId, idx) => {
+      const atk = CARD_BY_ID[cardId].atk;
+      if (atk > bestAtk) {
+        bestAtk = atk;
+        bestIdx = idx;
+      }
+    });
+
+    const cardId = hand[bestIdx];
+    summon = { card: cardId, slot: firstEmptyIndex };
+  }
+
+  return {
+    summon,
+    battle_phase: true,
+  };
 }
 
 // ---------- Render ----------
@@ -419,7 +522,7 @@ function endTurn() {
   if (gameState.turn === 'player') {
     gameState.turn = 'ai';
     logMessage('Terminas tu turno. Turno de la IA.');
-    aiTurn();
+    aiTurn(); 
   } else if (gameState.turn === 'ai') {
     gameState.turn = 'player';
     const drawn = drawCard('player');
@@ -430,7 +533,29 @@ function endTurn() {
   }
 }
 
-function aiTurn() {
+function buildSerializableState() {
+  return {
+    turn: gameState.turn,
+    phase: gameState.phase,
+    player: {
+      life: gameState.player.life,
+      deck: gameState.player.deck.map(id => CARD_BY_ID[id]),
+      hand: gameState.player.hand.map(id => CARD_BY_ID[id]),
+      field: gameState.player.field.map(id => id ? CARD_BY_ID[id] : null),
+    },
+    ai: {
+      life: gameState.ai.life,
+      deck: gameState.ai.deck.map(id => CARD_BY_ID[id]),
+      hand: gameState.ai.hand.map(id => CARD_BY_ID[id]),
+      field: gameState.ai.field.map(id => id ? CARD_BY_ID[id] : null),
+    }
+  };
+}
+
+/**
+ * Turno de la IA: ahora consulta al backend Python.
+ */
+async function aiTurn() {
   if (gameState.turn === 'ended') return;
 
   const drawn = drawCard('ai');
@@ -438,9 +563,89 @@ function aiTurn() {
     logMessage('La IA roba una carta.');
   }
 
+  let decision = null;
+
+  try {
+    const payload = buildSerializableState();
+
+    const response = await fetch('http://localhost:8000/ai-move', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error('Respuesta no OK del backend');
+    }
+
+    decision = await response.json();
+    logMessage('La IA ha calculado su jugada (Python).');
+  } catch (err) {
+    console.error('Error llamando a la IA en Python:', err);
+    logMessage('Error con la IA en Python. Usando IA local de respaldo.');
+    decision = fallbackLocalAIDecision();
+  }
+
+  applyAIDecision(decision);
+  render();
+
+  if (gameState.turn !== 'ended') {
+    gameState.turn = 'player';
+    const drawnP = drawCard('player');
+    if (drawnP) {
+      logMessage(`Robas carta: ${CARD_BY_ID[drawnP].name}.`);
+    }
+    render();
+  }
+}
+
+function applyAIDecision(decision) {
+  if (!decision) return;
+
+  // SUMMON
+  if (decision.summon && decision.summon.card) {
+    const { card, slot } = decision.summon;
+
+    // quitar carta de la mano de la IA
+    const idx = gameState.ai.hand.indexOf(card);
+    if (idx !== -1) {
+      gameState.ai.hand.splice(idx, 1);
+    }
+
+    // si slot no es válido, buscamos el primero libre
+    let targetSlot = slot;
+    if (
+      typeof targetSlot !== 'number' ||
+      targetSlot < 0 ||
+      targetSlot >= MAX_MONSTER_SLOTS ||
+      gameState.ai.field[targetSlot]
+    ) {
+      targetSlot = gameState.ai.field.findIndex((c) => !c);
+    }
+
+    if (targetSlot !== -1) {
+      gameState.ai.field[targetSlot] = card;
+      logMessage(`La IA invoca ${CARD_BY_ID[card].name}.`);
+    } else {
+      logMessage('La IA intentó invocar pero no tiene espacio en el campo.');
+    }
+  }
+
+  // FASE DE BATALLA
+  if (decision.battle_phase) {
+    resolveBattlePhase('ai');
+  }
+}
+
+
+function fallbackLocalAIDecision() {
   const field = gameState.ai.field;
   const hand = gameState.ai.hand;
   const firstEmptyIndex = field.findIndex((c) => !c);
+
+  let summon = null;
 
   if (firstEmptyIndex !== -1 && hand.length > 0) {
     let bestIdx = 0;
@@ -453,29 +658,27 @@ function aiTurn() {
       }
     });
 
-    const [chosenId] = hand.splice(bestIdx, 1);
-    field[firstEmptyIndex] = chosenId;
-    logMessage(`La IA invoca ${CARD_BY_ID[chosenId].name}.`);
+    const cardId = hand[bestIdx];
+    summon = { card: cardId, slot: firstEmptyIndex };
   }
 
-  render();
-
-  resolveBattlePhase('ai');
-
-  if (gameState.turn !== 'ended') {
-    gameState.turn = 'player';
-    const drawnP = drawCard('player');
-    if (drawnP) {
-      logMessage(`Robas carta: ${CARD_BY_ID[drawnP].name}.`);
-    }
-    render();
-  }
+  return {
+    summon,
+    battle_phase: true,
+  };
 }
 
 // ---------- Inicialización ----------
 
-function initGame(deckSize = DEFAULT_DECK_SIZE) {
-  deckSize = Math.min(deckSize, 40);
+function initGame(deckSize = null) {
+  // Si viene un valor desde fuera, lo usamos; si no, usamos el actual
+  if (typeof deckSize === 'number') {
+    // clamp 15–40
+    deckSize = Math.max(15, Math.min(deckSize, 40));
+    currentDeckSize = deckSize;
+  } else {
+    deckSize = currentDeckSize;
+  }
 
   gameState.turn = 'player';
   gameState.phase = 'main';
@@ -501,7 +704,6 @@ function initGame(deckSize = DEFAULT_DECK_SIZE) {
   if (log) log.innerHTML = '';
   logMessage(`Juego iniciado. Decks de ${deckSize} cartas.`);
 
-  // ocultar modal si estuviera abierto
   const modal = document.getElementById('end-modal');
   if (modal) modal.classList.remove('show');
 
@@ -511,21 +713,50 @@ function initGame(deckSize = DEFAULT_DECK_SIZE) {
 // ---------- Listeners de UI ----------
 
 document.addEventListener('DOMContentLoaded', () => {
-  initGame();
-
   const endTurnBtn = document.getElementById('btn-end-turn');
+  const playAgainBtn = document.getElementById('btn-play-again');
+  const exitBtn = document.getElementById('btn-exit');
+  const startGameBtn = document.getElementById('btn-start-game');
+  const deckSizeInput = document.getElementById('deck-size-input');
+
+  // Si quieres que al cargar la página ya haya un duelo creado,
+  // puedes descomentar esto:
+  // if (deckSizeInput) {
+  //   const val = parseInt(deckSizeInput.value, 10);
+  //   currentDeckSize = isNaN(val) ? DEFAULT_DECK_SIZE : Math.max(15, Math.min(val, 40));
+  // }
+  // initGame(currentDeckSize);
+
+  // 🔹 Iniciar duelo según el valor del input
+  if (startGameBtn && deckSizeInput) {
+    startGameBtn.addEventListener('click', () => {
+      let val = parseInt(deckSizeInput.value, 10);
+      if (isNaN(val)) val = DEFAULT_DECK_SIZE;
+
+      // clamp 15–40
+      val = Math.max(15, Math.min(val, 40));
+      deckSizeInput.value = val; // reflejar el clamp en el input
+
+      initGame(val);
+    });
+  }
+
   if (endTurnBtn) {
     endTurnBtn.addEventListener('click', endTurn);
   }
 
-  const playAgainBtn = document.getElementById('btn-play-again');
   if (playAgainBtn) {
     playAgainBtn.addEventListener('click', () => {
-      initGame();
+      // Usa siempre el tamaño actualmente configurado / mostrado
+      let val = DEFAULT_DECK_SIZE;
+      if (deckSizeInput) {
+        const parsed = parseInt(deckSizeInput.value, 10);
+        if (!isNaN(parsed)) val = Math.max(15, Math.min(parsed, 40));
+      }
+      initGame(val);
     });
   }
 
-  const exitBtn = document.getElementById('btn-exit');
   if (exitBtn) {
     exitBtn.addEventListener('click', () => {
       const app = document.querySelector('.app');
@@ -541,4 +772,3 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
