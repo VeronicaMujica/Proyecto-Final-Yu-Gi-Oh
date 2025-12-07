@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Yu-Gi-Oh! Minimax – Forbidden Memories</title>
-  <link rel="stylesheet" href="C:\Users\Administrador\Desktop\Proyecto-Final-Yu-Gi-Oh\Frontend\css\YugiOh.css" />
+  <link rel="stylesheet" href="Proyecto-Final-Yu-Gi-Oh\Frontend\css\YugiOh.css" />
 </head>
 <body>
   <div class="app">
@@ -52,7 +52,6 @@
           <p id="turn-info">Jugador</p>
         </div>
 
-        <!-- 🔽 NUEVO PANEL: CONFIGURACIÓN DE MAZO -->
         <div class="panel">
           <h3>Configuración de mazo</h3>
           <label for="deck-size-input" style="font-size: 0.8rem; color: #9ca3af;">
@@ -68,12 +67,31 @@
           />
           <button id="btn-start-game" class="btn">Iniciar duelo</button>
         </div>
-        <!-- 🔼 FIN NUEVO PANEL -->
 
         <div class="panel">
           <h3>Acciones</h3>
           <button id="btn-end-turn" class="btn">Terminar turno</button>
         </div>
+
+          <div class="panel">
+        <h3>Navegación</h3>
+
+        <button class="btn" style="width: 100%; margin-bottom: 8px;"
+          onclick="window.location.href='C:/Users/Administrador/Desktop/Proyecto-Final-Yu-Gi-Oh/Frontend/index.html'">
+          Inicio
+        </button>
+
+        <button class="btn" style="width: 100%; margin-bottom: 8px;"
+          onclick="window.location.href='C:/Users/Administrador/Desktop/Proyecto-Final-Yu-Gi-Oh/Frontend/instrucciones.html'">
+          Instrucciones
+        </button>
+
+        <button class="btn" style="width: 100%; margin-bottom: 8px;"
+          onclick="window.location.href='C:/Users/Administrador/Desktop/Proyecto-Final-Yu-Gi-Oh/Frontend/fusiones.html'">
+          Fusiones
+        </button>
+
+      </div>
 
         <div class="panel">
           <h3>Log</h3>
@@ -116,8 +134,8 @@
     </main>
   </div>
 
-  <script src="C:\Users\Administrador\Desktop\Proyecto-Final-Yu-Gi-Oh\Backend\cards.js"></script>
-  <script src="C:\Users\Administrador\Desktop\Proyecto-Final-Yu-Gi-Oh\Frontend\js\game.js"></script>
+  <script src="Proyecto-Final-Yu-Gi-Oh\Backend\cards.js"></script>
+  <script src="Proyecto-Final-Yu-Gi-Oh\Frontend\js\game.js"></script>
  
   <div id="damage-fx" class="damage-fx"></div>
 
