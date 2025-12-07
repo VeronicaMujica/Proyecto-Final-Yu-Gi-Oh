@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Yu-Gi-Oh! – Minimax Trainer</title>
+  <link rel="stylesheet" href="css/index.css" />
+</head>
+<body>
+  <div class="bg-overlay"></div>
+
+    <header class="hero">
+    <img src="img/Logo_Yu-Gi-Oh.webp" class="logo-main" alt="Logo YuGiOh" />
+    <img src="img/Yugi.webp" class="yugi-art" alt="Yugi" />
+    </header>
+
+
+  <main class="main-container">
+    <section class="intro">
+      <p>
+        Elige una opción para comenzar: entra al simulador de duelos, revisa las reglas y
+        fusiones disponibles o consulta las instrucciones del proyecto.
+      </p>
+    </section>
+
+    <section class="menu-grid">
+      <!-- Carta: Juego -->
+      <a href="YugiOh.html" class="menu-card">
+        <div class="menu-card-inner">
+          <div class="menu-card-front">
+            <div class="menu-card-border">
+              <h2>Jugar</h2>
+              <p>Entra al campo de duelo, prueba la IA Minimax y experimenta las fusiones en tiempo real.</p>
+            </div>
+          </div>
+          <div class="menu-card-back">
+            <span>Ir al juego</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Carta: Instrucciones -->
+      <a href="instrucciones.html" class="menu-card">
+        <div class="menu-card-inner">
+          <div class="menu-card-front">
+            <div class="menu-card-border">
+              <h2>Instrucciones</h2>
+              <p>Resumen de reglas, flujo de turnos, configuración del mazo y funcionamiento de la IA.</p>
+            </div>
+          </div>
+          <div class="menu-card-back">
+            <span>Ver instrucciones</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Carta: Fusiones -->
+      <a href="fusiones.html" class="menu-card">
+        <div class="menu-card-inner">
+          <div class="menu-card-front">
+            <div class="menu-card-border">
+              <h2>Fusiones</h2>
+              <p>Consulta la lista de fusiones implementadas en esta versión, basadas en Forbidden Memories.</p>
+            </div>
+          </div>
+          <div class="menu-card-back">
+            <span>Ver fusiones</span>
+          </div>
+        </div>
+      </a>
+    </section>
+  </main>
+
+  <footer class="main-footer">
+    <p>Proyecto académico · Yu-Gi-Oh! Forbidden Memories · IA Minimax</p>
+  </footer>
+</body>
+</html>
