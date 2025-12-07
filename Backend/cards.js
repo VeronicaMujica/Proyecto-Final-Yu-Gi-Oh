@@ -1,5 +1,3 @@
-// data/cards.js
-
 const IMG_BASE = 'https://images.ygoprodeck.com/images/cards/';
 
 // Modelo de carta:
@@ -13,8 +11,6 @@ const IMG_BASE = 'https://images.ygoprodeck.com/images/cards/';
 //   image: 'https://images.ygoprodeck.com/images/cards/89631139.jpg'
 // }
 
-// Subconjunto de cartas reales de Forbidden Memories.
-// Puedes ampliarlo hasta 80 siguiendo la misma estructura.
 const CARD_POOL = [
   {
     id: 'DRAGON_BLANCO_DE_OJOS_AZULES',
@@ -717,7 +713,6 @@ const CARD_POOL = [
     element: 'Tierra',
     image: IMG_BASE + '01784619.jpg'
   }
-  // ... aquí puedes seguir añadiendo hasta llegar a las 80 cartas que quieras
 ];
 
 // Mapa rápido id -> carta
@@ -726,24 +721,107 @@ for (const c of CARD_POOL) {
   CARD_BY_ID[c.id] = c;
 }
 
-// Fusiones (ejemplos reales / coherentes con YGO)
+// Fusiones (usando solo cartas de CARD_POOL)
 const FUSION_RULES = [
-  // Bebé Dragón + Mago del Tiempo -> Dragón Milenario
+  // 1) Bebé Dragón + Mago del Tiempo → Dragón Milenario
   {
     inputs: ['BEBE_DRAGON', 'MAGO_DEL_TIEMPO'],
     result: 'DRAGON_MILENARIO'
   },
-  // Gaia el Caballero Feroz + Maldición de Dragón -> Gaia el Campeón Dragón
+
+  // 2) Gaia el Caballero Feroz + Maldición de Dragón → Gaia el Campeón Dragón
   {
     inputs: ['GAIA_EL_CABALLERO_FEROZ', 'MALDICION_DE_DRAGON'],
     result: 'GAIA_EL_CAMPEON_DRAGON'
   },
-  // Guardián Celta + Maldición de Dragón -> Gaia el Campeón Dragón (regla extra, inspirada en FM)
+
+  // 3) Guardián Celta + Maldición de Dragón → Gaia el Campeón Dragón (variante)
   {
     inputs: ['GUARDIAN_CELTA', 'MALDICION_DE_DRAGON'],
     result: 'GAIA_EL_CAMPEON_DRAGON'
+  },
+
+  // 4–7) Bebé Dragón + cualquier dragón fuerte → Dragón Milenario
+  {
+    inputs: ['BEBE_DRAGON', 'DRAGON_ALADO'],
+    result: 'DRAGON_MILENARIO'
+  },
+  {
+    inputs: ['BEBE_DRAGON', 'DRAGON_DE_KOUMORI'],
+    result: 'DRAGON_MILENARIO'
+  },
+  {
+    inputs: ['BEBE_DRAGON', 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA'],
+    result: 'DRAGON_MILENARIO'
+  },
+  {
+    inputs: ['BEBE_DRAGON', 'DRAGON_BLANCO_DE_OJOS_AZULES'],
+    result: 'DRAGON_MILENARIO'
+  },
+
+  // 8–10) Evolución de insectos → Gran Moth
+  {
+    inputs: ['LARVA_DE_MOTH', 'INSECTO_BASICO'],
+    result: 'GRAN_MOTH'
+  },
+  {
+    inputs: ['LARVA_DE_MOTH', 'INSECTO_GRANDE'],
+    result: 'GRAN_MOTH'
+  },
+  {
+    inputs: ['LARVA_DE_MOTH', 'ESCARABAJO_HERCULES'],
+    result: 'GRAN_MOTH'
+  },
+
+  // 11–12) Gran Moth + Capullo / insecto tanque → Gran Moth Definitivo Perfecto
+  {
+    inputs: ['GRAN_MOTH', 'CAPULLO_EVOLUTIVO'],
+    result: 'GRAN_MOTH_DEFINITIVO_PERFECTO'
+  },
+  {
+    inputs: ['ESCARABAJO_HERCULES', 'CAPULLO_EVOLUTIVO'],
+    result: 'GRAN_MOTH_DEFINITIVO_PERFECTO'
+  },
+
+  // 13–15) Demonios + zombis → Cráneo Convocado
+  {
+    inputs: ['DIABLILLO_DE_CUERNO', 'SIRVIENTE_DE_LA_CALAVERA'],
+    result: 'CRANEO_CONVOCADO'
+  },
+  {
+    inputs: ['DIABLO_SALVAJE', 'ESPECTRO_DE_SOMBRA'],
+    result: 'CRANEO_CONVOCADO'
+  },
+  {
+    inputs: ['SANGAN', 'RYU-KISHIN'],
+    result: 'CRANEO_CONVOCADO'
+  },
+
+  // 16–17) Bestias / bestia-guerrero → Garoozis
+  {
+    inputs: ['BUEY_DE_BATALLA', 'GUERRERO_DE_LA_MONTAÑA'],
+    result: 'GAROOZIS'
+  },
+  {
+    inputs: ['GRIFFORE', 'HACHA_DEL_TIGRE'],
+    result: 'GAROOZIS'
+  },
+
+  // 18–19) Dinosaurios + Brazo de Espada de Dragón → Megazowler
+  {
+    inputs: ['REY_DE_DOS_CABEZAS_REX', 'BRAZO_DE_ESPADA_DE_DRAGON'],
+    result: 'MEGAZOWLER'
+  },
+  {
+    inputs: ['URABY', 'BRAZO_DE_ESPADA_DE_DRAGON'],
+    result: 'MEGAZOWLER'
+  },
+
+  // 20) Reptil de agua + Aqua → Kairyu-Shin
+  {
+    inputs: ['KROKODILUS', 'ADICTO_KRAKEN'],
+    result: 'KAIRYU_SHIN'
   }
-  // ... añade más hasta llegar a mínimo 15
 ];
 
 // Devuelve el id de la carta fusión si existe regla para (id1, id2)

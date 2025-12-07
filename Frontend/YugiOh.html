@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Yu-Gi-Oh! Minimax – Forbidden Memories</title>
+  <link rel="stylesheet" href="C:\Users\Administrador\Desktop\Proyecto-Final-Yu-Gi-Oh\Frontend\css\YugiOh.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>Yu-Gi-Oh! – Minimax Trainer</h1>
+    </header>
+
+    <main class="board">
+      <!-- Zona IA -->
+      <section class="zone zone-opponent">
+        <div class="zone-header">
+          <h2>IA</h2>
+          <span id="ai-life" class="life-points">LP: 8000</span>
+        </div>
+
+        <div class="field-row">
+          <div id="ai-monster-zone" class="monster-zone">
+            <!-- Cartas monstruo de la IA -->
+          </div>
+        </div>
+
+        <div class="hand-row">
+          <div id="ai-hand" class="hand hand-opponent">
+            <!-- Mano de la IA -->
+          </div>
+        </div>
+
+        <div class="deck-row">
+          <div class="deck-stack">
+            <div class="deck-card back"></div>
+            <span id="ai-deck-count" class="deck-count">40</span>
+            <small>Deck IA</small>
+          </div>
+
+          <div class="deck-preview-wrapper">
+            <small>Próximas cartas IA</small>
+            <div id="ai-deck-preview" class="deck-preview"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel lateral de estado -->
+      <aside class="sidebar">
+        <div class="panel">
+          <h3>Turno</h3>
+          <p id="turn-info">Jugador</p>
+        </div>
+
+        <div class="panel">
+          <h3>Acciones</h3>
+          <button id="btn-end-turn" class="btn">Terminar turno</button>
+        </div>
+
+        <div class="panel">
+          <h3>Log</h3>
+          <div id="log" class="log"></div>
+        </div>
+      </aside>
+
+      <!-- Zona jugador -->
+      <section class="zone zone-player">
+        <div class="zone-header">
+          <h2>Jugador</h2>
+          <span id="player-life" class="life-points">LP: 8000</span>
+        </div>
+
+        <div class="field-row">
+          <div id="player-monster-zone" class="monster-zone">
+            <!-- Cartas monstruo del jugador -->
+          </div>
+        </div>
+
+        <div class="hand-row">
+          <div id="player-hand" class="hand">
+            <!-- Mano del jugador -->
+          </div>
+        </div>
+
+        <div class="deck-row">
+          <div class="deck-stack">
+            <div class="deck-card back"></div>
+            <span id="player-deck-count" class="deck-count">40</span>
+            <small>Tu Deck</small>
+          </div>
+
+          <div class="deck-preview-wrapper">
+            <small>Próximas cartas</small>
+            <div id="player-deck-preview" class="deck-preview"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="C:\Users\Administrador\Desktop\Proyecto-Final-Yu-Gi-Oh\Backend\cards.js"></script>
+  <script src="C:\Users\Administrador\Desktop\Proyecto-Final-Yu-Gi-Oh\Frontend\js\game.js"></script>
+ 
+  <div id="damage-fx" class="damage-fx"></div>
+  <div id="end-modal" class="modal">
+  <div class="modal-content">
+    <h2>Partida terminada</h2>
+    <p id="end-result"></p>
+    <p id="end-lp"></p>
+    <div class="modal-actions">
+      <button id="btn-play-again" class="btn">Jugar otra vez</button>
+      <button id="btn-exit" class="btn btn-secondary">Salir</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

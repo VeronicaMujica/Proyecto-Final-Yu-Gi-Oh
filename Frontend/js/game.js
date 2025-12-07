@@ -6,12 +6,12 @@ const INITIAL_HAND_SIZE = 5;
 
 const gameState = {
   turn: 'player', // 'player' | 'ai' | 'ended'
-  phase: 'main', // por si luego quieres separarlo mejor
+  phase: 'main',
   player: {
     life: 8000,
     deck: [],
     hand: [],
-    field: [], // array de ids o null
+    field: [],
   },
   ai: {
     life: 8000,
@@ -19,9 +19,8 @@ const gameState = {
     hand: [],
     field: [],
   },
-  debugShowAIHand: false,
   fusionMode: false,
-  fusionFirstIndex: null, // índice en la mano del jugador
+  fusionFirstIndex: null,
 };
 
 // ---------- Utilidades generales ----------
@@ -42,7 +41,6 @@ function shuffle(array) {
   }
 }
 
-// Construye un mazo tomando cartas aleatorias del pool
 function buildDeckFromPool(size) {
   const poolCopy = [...CARD_POOL];
   shuffle(poolCopy);
@@ -61,6 +59,36 @@ function otherPlayer(key) {
   return key === 'player' ? 'ai' : 'player';
 }
 
+// FX daño
+function showDamageFX(amount) {
+  const fx = document.getElementById('damage-fx');
+  if (!fx) return;
+  fx.textContent = `-${amount}`;
+  fx.classList.add('show');
+
+  setTimeout(() => {
+    fx.classList.remove('show');
+  }, 600);
+}
+
+// Modal de fin de partida
+function showEndModal(winner) {
+  const modal = document.getElementById('end-modal');
+  const resultEl = document.getElementById('end-result');
+  const lpEl = document.getElementById('end-lp');
+  if (!modal || !resultEl || !lpEl) return;
+
+  if (winner === 'Empate') {
+    resultEl.textContent = 'Resultado: Empate';
+  } else {
+    resultEl.textContent = `Ganador: ${winner}`;
+  }
+
+  lpEl.textContent = `LP Jugador: ${gameState.player.life}   |   LP IA: ${gameState.ai.life}`;
+
+  modal.classList.add('show');
+}
+
 // ---------- Render ----------
 
 function createCardElement(
@@ -76,7 +104,6 @@ function createCardElement(
   }
 
   if (hidden) {
-    // Carta boca abajo (IA por defecto)
     el.style.background = 'linear-gradient(135deg, #0ea5e9, #6366f1)';
     el.style.border = '1px solid rgba(148, 163, 184, 0.8)';
     if (clickable && typeof onClick === 'function') {
@@ -166,11 +193,9 @@ function render() {
     playerHandDiv.appendChild(cardEl);
   });
 
-  // Mano IA (oculta por defecto)
+  // Mano IA SIEMPRE visible
   gameState.ai.hand.forEach((cardId) => {
-    const cardEl = createCardElement(cardId, {
-      hidden: !gameState.debugShowAIHand,
-    });
+    const cardEl = createCardElement(cardId);
     aiHandDiv.appendChild(cardEl);
   });
 
@@ -194,15 +219,13 @@ function render() {
     slot.className = 'card-slot';
     if (slotCardId) {
       slot.classList.add('has-card');
-      const cardEl = createCardElement(slotCardId, {
-        hidden: !gameState.debugShowAIHand,
-      });
+      const cardEl = createCardElement(slotCardId);
       slot.appendChild(cardEl);
     }
     aiFieldDiv.appendChild(slot);
   }
 
-  // Preview de mazo: mostrar TODA la secuencia de cartas que quedan
+  // Preview de mazo jugador
   if (playerDeckPreviewDiv) {
     gameState.player.deck.forEach((cardId) => {
       const cardEl = createCardElement(cardId, {
@@ -214,21 +237,20 @@ function render() {
     });
   }
 
+  // Preview de mazo IA
   if (aiDeckPreviewDiv) {
     gameState.ai.deck.forEach((cardId) => {
       const cardEl = createCardElement(cardId, {
         size: 'mini',
         clickable: false,
-        hidden: false, 
+        hidden: false,
       });
       aiDeckPreviewDiv.appendChild(cardEl);
     });
   }
-
-  aiHandDiv.classList.toggle('debug-visible', gameState.debugShowAIHand);
 }
 
-// ---------- Lógica de juego: invocación, fusiones, batalla ----------
+// ---------- Lógica de juego ----------
 
 function handlePlayerHandClick(index) {
   if (gameState.turn !== 'player' || gameState.turn === 'ended') return;
@@ -240,7 +262,6 @@ function handlePlayerHandClick(index) {
   }
 }
 
-// Invocación simple al primer slot vacío
 function handlePlayerPlayCard(handIndex) {
   const firstEmptyIndex = gameState.player.field.findIndex((c) => !c);
   if (firstEmptyIndex === -1) {
@@ -255,7 +276,6 @@ function handlePlayerPlayCard(handIndex) {
   render();
 }
 
-// Modo fusión: seleccionar dos cartas de la mano
 function handleFusionClick(handIndex) {
   const hand = gameState.player.hand;
 
@@ -269,7 +289,6 @@ function handleFusionClick(handIndex) {
   }
 
   if (gameState.fusionFirstIndex === handIndex) {
-    // cancelar selección
     gameState.fusionFirstIndex = null;
     logMessage('Selección de fusión cancelada.');
     render();
@@ -290,7 +309,6 @@ function handleFusionClick(handIndex) {
     return;
   }
 
-  // Aplicar fusión: quitar las dos cartas de la mano y añadir la resultante
   const indices = [gameState.fusionFirstIndex, handIndex].sort((a, b) => b - a);
   for (const idx of indices) {
     hand.splice(idx, 1);
@@ -305,7 +323,6 @@ function handleFusionClick(handIndex) {
   render();
 }
 
-// Resolver fase de batalla para 'player' o 'ai'
 function resolveBattlePhase(attackerKey) {
   if (gameState.turn === 'ended') return;
 
@@ -321,7 +338,7 @@ function resolveBattlePhase(attackerKey) {
 
   for (let i = 0; i < MAX_MONSTER_SLOTS; i++) {
     const atkId = attackerField[i];
-    if (!atkId) continue; // no hay monstruo en ese slot
+    if (!atkId) continue;
 
     const atkCard = CARD_BY_ID[atkId];
     const defId = defenderField[i];
@@ -331,7 +348,7 @@ function resolveBattlePhase(attackerKey) {
 
       if (atkCard.atk > defCard.atk) {
         const damage = atkCard.atk - defCard.atk;
-        defenderField[i] = null; // destruye defensor
+        defenderField[i] = null;
         gameState[defenderKey].life -= damage;
         showDamageFX(damage);
         logMessage(
@@ -341,8 +358,9 @@ function resolveBattlePhase(attackerKey) {
         );
       } else if (atkCard.atk < defCard.atk) {
         const damage = defCard.atk - atkCard.atk;
-        attackerField[i] = null; // se destruye el atacante
+        attackerField[i] = null;
         gameState[attackerKey].life -= damage;
+        showDamageFX(damage);
         logMessage(
           `${atkCard.name} es destruido por ${defCard.name}. ${
             attackerKey === 'player' ? 'Tú' : 'La IA'
@@ -354,8 +372,8 @@ function resolveBattlePhase(attackerKey) {
         logMessage(`${atkCard.name} y ${defCard.name} se destruyen mutuamente.`);
       }
     } else {
-      // ataque directo
       gameState[defenderKey].life -= atkCard.atk;
+      showDamageFX(atkCard.atk);
       logMessage(
         `${atkCard.name} ataca directamente. ${
           defenderKey === 'player' ? 'Tú' : 'La IA'
@@ -363,7 +381,6 @@ function resolveBattlePhase(attackerKey) {
       );
     }
 
-    // Comprobamos fin de duelo tras cada ataque
     if (checkGameEnd()) {
       render();
       return;
@@ -373,7 +390,6 @@ function resolveBattlePhase(attackerKey) {
   render();
 }
 
-// Devuelve true si el duelo ha terminado
 function checkGameEnd() {
   if (gameState.player.life <= 0 || gameState.ai.life <= 0) {
     const playerLP = Math.max(gameState.player.life, 0);
@@ -387,6 +403,9 @@ function checkGameEnd() {
 
     logMessage(`El duelo ha terminado. Ganador: ${winner}.`);
     gameState.turn = 'ended';
+
+    showEndModal(winner);
+
     return true;
   }
   return false;
@@ -411,7 +430,6 @@ function endTurn() {
   }
 }
 
-// Turno IA (por ahora: robo + invocar + batalla simple)
 function aiTurn() {
   if (gameState.turn === 'ended') return;
 
@@ -420,7 +438,6 @@ function aiTurn() {
     logMessage('La IA roba una carta.');
   }
 
-  // IA invoca la carta con mayor ATK que tenga en mano, si hay espacio
   const field = gameState.ai.field;
   const hand = gameState.ai.hand;
   const firstEmptyIndex = field.findIndex((c) => !c);
@@ -443,11 +460,9 @@ function aiTurn() {
 
   render();
 
-  // Fase de batalla IA
   resolveBattlePhase('ai');
 
   if (gameState.turn !== 'ended') {
-    // Pasa turno al jugador y robas una carta
     gameState.turn = 'player';
     const drawnP = drawCard('player');
     if (drawnP) {
@@ -457,26 +472,15 @@ function aiTurn() {
   }
 }
 
-function showDamageFX(amount) {
-  const fx = document.getElementById('damage-fx');
-  fx.textContent = `-${amount}`;
-  fx.classList.add('show');
-
-  setTimeout(() => {
-    fx.classList.remove('show');
-  }, 600);
-}
-
 // ---------- Inicialización ----------
 
 function initGame(deckSize = DEFAULT_DECK_SIZE) {
-  deckSize = Math.min(deckSize, 40); // requisito del enunciado
+  deckSize = Math.min(deckSize, 40);
 
   gameState.turn = 'player';
   gameState.phase = 'main';
   gameState.player.life = 8000;
   gameState.ai.life = 8000;
-  gameState.debugShowAIHand = false;
   gameState.fusionMode = false;
   gameState.fusionFirstIndex = null;
 
@@ -493,8 +497,13 @@ function initGame(deckSize = DEFAULT_DECK_SIZE) {
     drawCard('ai');
   }
 
-  document.getElementById('log').innerHTML = '';
+  const log = document.getElementById('log');
+  if (log) log.innerHTML = '';
   logMessage(`Juego iniciado. Decks de ${deckSize} cartas.`);
+
+  // ocultar modal si estuviera abierto
+  const modal = document.getElementById('end-modal');
+  if (modal) modal.classList.remove('show');
 
   render();
 }
@@ -504,38 +513,32 @@ function initGame(deckSize = DEFAULT_DECK_SIZE) {
 document.addEventListener('DOMContentLoaded', () => {
   initGame();
 
-  document.getElementById('btn-end-turn').addEventListener('click', endTurn);
+  const endTurnBtn = document.getElementById('btn-end-turn');
+  if (endTurnBtn) {
+    endTurnBtn.addEventListener('click', endTurn);
+  }
 
-  document.getElementById('btn-toggle-debug').addEventListener('click', () => {
-    gameState.debugShowAIHand = !gameState.debugShowAIHand;
-    logMessage(
-      gameState.debugShowAIHand
-        ? 'Modo debug activado: ves la mano y campo de la IA.'
-        : 'Modo debug desactivado: mano IA oculta.'
-    );
-    render();
-  });
+  const playAgainBtn = document.getElementById('btn-play-again');
+  if (playAgainBtn) {
+    playAgainBtn.addEventListener('click', () => {
+      initGame();
+    });
+  }
 
-  document.getElementById('btn-fusion-mode').addEventListener('click', (e) => {
-    if (gameState.turn === 'ended') return;
-    gameState.fusionMode = !gameState.fusionMode;
-    gameState.fusionFirstIndex = null;
-    e.target.textContent = gameState.fusionMode
-      ? 'Modo fusión: ON'
-      : 'Modo fusión: OFF';
-    logMessage(
-      gameState.fusionMode
-        ? 'Modo fusión activado. Haz clic en dos cartas de tu mano para intentar fusionarlas.'
-        : 'Modo fusión desactivado.'
-    );
-    render();
-  });
+  const exitBtn = document.getElementById('btn-exit');
+  if (exitBtn) {
+    exitBtn.addEventListener('click', () => {
+      const app = document.querySelector('.app');
+      if (app) app.style.display = 'none';
 
-  document.getElementById('btn-battle-phase').addEventListener('click', () => {
-    if (gameState.turn !== 'player') {
-      logMessage('No es tu turno para declarar batalla.');
-      return;
-    }
-    resolveBattlePhase('player');
-  });
+      const msg = document.createElement('div');
+      msg.style.color = '#e5e7eb';
+      msg.style.fontSize = '1.2rem';
+      msg.style.margin = '2rem auto';
+      msg.style.textAlign = 'center';
+      msg.textContent = 'Gracias por jugar. Puedes cerrar la pestaña.';
+      document.body.appendChild(msg);
+    });
+  }
 });
+
