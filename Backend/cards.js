@@ -8,7 +8,7 @@ const IMG_BASE = 'https://images.ygoprodeck.com/images/cards/';
 //   def: 2500,
 //   type: 'Dragón',
 //   element: 'Luz',
-//   image: 'https://images.ygoprodeck.com/images/cards/89631139.jpg'
+//   image: IMG_BASE + '89631139.jpg'
 // }
 
 const CARD_POOL = [
@@ -86,7 +86,7 @@ const CARD_POOL = [
   },
   {
     id: 'ESPECTRO_DE_SOMBRA',
-    name: 'Espectro de sombra',
+    name: 'Espectro de Sombra',
     atk: 500,
     def: 200,
     type: 'Zombi',
@@ -113,7 +113,7 @@ const CARD_POOL = [
   },
   {
     id: 'GUARDIAN_DE_BATALLA_DEL_PANTANO',
-    name: 'Brazo de Espada de Dragón',
+    name: 'Guardián de Batalla del Pantano',
     atk: 1800,
     def: 1500,
     type: 'Guerrero',
@@ -149,7 +149,7 @@ const CARD_POOL = [
   },
   {
     id: 'MAGO_DEL_TIEMPO',
-    name: 'Espadachín de la Llama',
+    name: 'Mago del Tiempo',
     atk: 500,
     def: 400,
     type: 'Lanzador de Conjuros',
@@ -167,7 +167,7 @@ const CARD_POOL = [
   },
   {
     id: 'PIERNA_IZQUIERDA_DEL_PROHIBIDO',
-    name: 'Pierna Derecha del Prohibido',
+    name: 'Pierna Izquierda del Prohibido',
     atk: 200,
     def: 300,
     type: 'Lanzador de Conjuros',
@@ -175,8 +175,8 @@ const CARD_POOL = [
     image: IMG_BASE + '44519536.jpg'
   },
   {
-    id: 'BRAZO_DERECHA_DEL_PROHIBIDO',
-    name: 'Pierna Derecha del Prohibido',
+    id: 'BRAZO_DERECHO_DEL_PROHIBIDO',
+    name: 'Brazo Derecho del Prohibido',
     atk: 200,
     def: 300,
     type: 'Lanzador de Conjuros',
@@ -184,8 +184,8 @@ const CARD_POOL = [
     image: IMG_BASE + '70903634.jpg'
   },
   {
-    id: 'BRAZO_IZQUIERDA_DEL_PROHIBIDO',
-    name: 'Pierna Derecha del Prohibido',
+    id: 'BRAZO_IZQUIERDO_DEL_PROHIBIDO',
+    name: 'Brazo Izquierdo del Prohibido',
     atk: 200,
     def: 300,
     type: 'Lanzador de Conjuros',
@@ -194,7 +194,7 @@ const CARD_POOL = [
   },
   {
     id: 'EXODIA_EL_PROHIBIDO',
-    name: 'Exosia, el Prohibido',
+    name: 'Exodia el Prohibido',
     atk: 1000,
     def: 1000,
     type: 'Lanzador de Conjuros',
@@ -211,8 +211,8 @@ const CARD_POOL = [
     image: IMG_BASE + '70781052.jpg'
   },
   {
-    id: 'LA_PERVERSA_BESTIA-GUSANO',
-    name: 'La perversa Bestia-Gusano',
+    id: 'LA_PERVERSA_BESTIA_GUSANO',
+    name: 'La Perversa Bestia-Gusano',
     atk: 1400,
     def: 700,
     type: 'Bestia',
@@ -328,7 +328,7 @@ const CARD_POOL = [
     image: IMG_BASE + '46986414.jpg'
   },
   {
-    id: 'El_PELO_DE_SERPIENTE',
+    id: 'EL_PELO_DE_SERPIENTE',
     name: 'El Pelo de Serpiente',
     atk: 1500,
     def: 1200,
@@ -352,7 +352,7 @@ const CARD_POOL = [
     def: 2100,
     type: 'Guerrero',
     element: 'Tierra',
-    image: IMG_BASE + '06368038.jpg'
+    image: IMG_BASE + '6368038.jpg'
   },
   {
     id: 'MALDICION_DE_DRAGON',
@@ -401,7 +401,7 @@ const CARD_POOL = [
   },
   {
     id: 'MUÑECA_PICARA',
-    name: 'Muñeca Picara',
+    name: 'Muñeca Pícara',
     atk: 1500,
     def: 1200,
     type: 'Lanzador de Conjuros',
@@ -409,7 +409,7 @@ const CARD_POOL = [
     image: IMG_BASE + '91152256.jpg'
   },
   {
-    id: 'WATTNIÑO',
+    id: 'WATTNINO',
     name: 'Wattniño',
     atk: 1000,
     def: 500,
@@ -417,7 +417,7 @@ const CARD_POOL = [
     element: 'Luz',
     image: IMG_BASE + '27324313.jpg'
   },
-  //46
+
   {
     id: 'GRIFFORE',
     name: 'Griffore',
@@ -465,7 +465,7 @@ const CARD_POOL = [
   },
   {
     id: 'LAGARTO_ACORAZADO',
-    name: 'Insecto Básico',
+    name: 'Lagarto Acorazado',
     atk: 1500,
     def: 1200,
     type: 'Reptil',
@@ -501,7 +501,7 @@ const CARD_POOL = [
   },
   {
     id: 'PULGA_GIGANTE',
-    name: 'Pulga_Gigante',
+    name: 'Pulga Gigante',
     atk: 1500,
     def: 1200,
     type: 'Insecto',
@@ -526,7 +526,7 @@ const CARD_POOL = [
     element: 'Tierra',
     image: IMG_BASE + '14141448.jpg'
   },
-  //61
+
   {
     id: 'LOBO',
     name: 'Lobo',
@@ -547,7 +547,7 @@ const CARD_POOL = [
   },
   {
     id: 'HERMANAS_DE_LA_DAMA_ARPIA',
-    name: 'Dama Arpía',
+    name: 'Hermanas de la Dama Arpía',
     atk: 1950,
     def: 2100,
     type: 'Bestia Alada',
@@ -583,7 +583,7 @@ const CARD_POOL = [
   },
   {
     id: 'GRAN_MOTH_DEFINITIVO_PERFECTO',
-    name: 'Gran Moth',
+    name: 'Gran Moth Definitivo Perfecto',
     atk: 3500,
     def: 3000,
     type: 'Insecto',
@@ -599,7 +599,7 @@ const CARD_POOL = [
     element: 'Fuego',
     image: IMG_BASE + '14977074.jpg'
   },
-  //69
+
   {
     id: 'DRAGON_MILENARIO',
     name: 'Dragón Milenario',
@@ -609,7 +609,7 @@ const CARD_POOL = [
     element: 'Viento',
     image: IMG_BASE + '41462083.jpg'
   },
-  //70
+
   {
     id: 'ADICTO_KRAKEN',
     name: 'Adicto Kraken',
@@ -628,7 +628,7 @@ const CARD_POOL = [
     element: 'Agua',
     image: IMG_BASE + '14851496.jpg'
   },
-  //72
+
   {
     id: 'CAPULLO_EVOLUTIVO',
     name: 'Capullo Evolutivo',
@@ -638,10 +638,10 @@ const CARD_POOL = [
     element: 'Tierra',
     image: IMG_BASE + '40240595.jpg'
   },
-  //73
+
   {
     id: 'KAIRYU_SHIN',
-    name: 'Kairyu - Shin',
+    name: 'Kairyu-Shin',
     atk: 1800,
     def: 1500,
     type: 'Serpiente Marina',
@@ -658,8 +658,8 @@ const CARD_POOL = [
     image: IMG_BASE + '13039848.jpg'
   },
   {
-    id: 'PLANTA_COME-HOMBRES',
-    name: 'Soldado Gigante de Piedra',
+    id: 'PLANTA_COME_HOMBRES',
+    name: 'Planta Come-Hombres',
     atk: 800,
     def: 600,
     type: 'Planta',
@@ -684,7 +684,7 @@ const CARD_POOL = [
     element: 'Agua',
     image: IMG_BASE + '2906250.jpg'
   },
-  //78
+
   {
     id: 'INCURSOR_DEL_HACHA',
     name: 'Incursor del Hacha',
@@ -703,7 +703,7 @@ const CARD_POOL = [
     element: 'Tierra',
     image: IMG_BASE + '75390004.jpg'
   },
-  //80
+  
   {
     id: 'URABY',
     name: 'Uraby',
@@ -711,7 +711,7 @@ const CARD_POOL = [
     def: 800,
     type: 'Dinosaurio',
     element: 'Tierra',
-    image: IMG_BASE + '01784619.jpg'
+    image: IMG_BASE + '1784619.jpg'
   }
 ];
 

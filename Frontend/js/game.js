@@ -341,6 +341,16 @@ function handleFusionClick(handIndex) {
     `Fusión exitosa: "${CARD_BY_ID[firstId].name}" + "${CARD_BY_ID[secondId].name}" → "${CARD_BY_ID[fusionResultId].name}".`
   );
 
+  //invocar automaticamente si hay espacio
+  const firstEmpty = gameState.player.field.findIndex(c => !c);
+  if (firstEmpty !== -1) {
+    // sacar de la mano (último push) y poner en campo
+    const idxInHand = gameState.player.hand.indexOf(fusionResultId);
+    if (idxInHand !== -1) gameState.player.hand.splice(idxInHand,1);
+    gameState.player.field[firstEmpty] = fusionResultId;
+    logMessage(`Invocas inmediatamente ${CARD_BY_ID[fusionResultId].name} tras la fusión.`);
+  }
+
   gameState.fusionFirstIndex = null;
   render();
 }
@@ -457,13 +467,130 @@ function endTurn() {
 function applyAIDecision(decision) {
   if (!decision) return;
 
-  if (decision.summon && decision.summon.card) {
-    const { card, slot } = decision.summon;
+  console.group('AI Decision apply');
+  console.log('Decision recibida:', decision);
+  console.log('AI hand antes:', JSON.parse(JSON.stringify(gameState.ai.hand)));
+  console.log('AI field antes:', JSON.parse(JSON.stringify(gameState.ai.field)));
 
-    const idx = gameState.ai.hand.indexOf(card);
+  // Helpers internos ---------------------------------------------------
+  const normalizeId = (maybe) => {
+    // acepta "ID string" o objeto { id: 'ID', ... } o el propio CARD_BY_ID object
+    if (!maybe) return null;
+    if (typeof maybe === 'string') return maybe;
+    if (typeof maybe === 'object') {
+      if (maybe.id) return maybe.id;
+      // en caso sea el objeto en CARD_BY_ID exactamente (posiblemente)
+      return maybe;
+    }
+    return null;
+  };
+
+  const removeCardFromHandOrField = (cardId) => {
+    // cardId: string id
+    // 1) mano puede contener ids o objetos {id:...}
+    // buscar por igualdad estricta (id) o por .id property
+    let idx = gameState.ai.hand.findIndex(h => {
+      if (!h) return false;
+      if (typeof h === 'string') return h === cardId;
+      if (typeof h === 'object') return h.id === cardId || h === cardId;
+      return false;
+    });
+    if (idx !== -1) {
+      const removed = gameState.ai.hand.splice(idx, 1)[0];
+      return { removedFrom: 'hand', removed };
+    }
+
+    // 2) buscar en campo (campo puede contener ids o objetos)
+    idx = gameState.ai.field.findIndex(f => {
+      if (!f) return false;
+      if (typeof f === 'string') return f === cardId;
+      if (typeof f === 'object') return f.id === cardId || f === cardId;
+      return false;
+    });
+    if (idx !== -1) {
+      const removed = gameState.ai.field[idx];
+      gameState.ai.field[idx] = null;
+      return { removedFrom: 'field', removed };
+    }
+
+    return null;
+  };
+
+  const pushResultToHandOnce = (resultId) => {
+    // evitar duplicados raros: si ya hay un resultId en mano no agregar de nuevo
+    const exists = gameState.ai.hand.find(h => (typeof h === 'string' ? h === resultId : (h && h.id === resultId)));
+    if (!exists) {
+      gameState.ai.hand.push(resultId);
+      return true;
+    }
+    return false;
+  };
+
+  // End helpers --------------------------------------------------------
+
+  // Caso 1: decision contiene fusión estructurada: decision.summon.fusion
+  if (decision.summon && decision.summon.fusion) {
+    const fus = decision.summon.fusion; // puede venir { c1, c2, result }
+    const c1id = normalizeId(fus.c1);
+    const c2id = normalizeId(fus.c2);
+    const resid = normalizeId(fus.result);
+
+    console.log('IA pidió fusión:', { c1id, c2id, resid });
+
+    // intentar eliminar c1 y c2 (mano o campo)
+    const r1 = removeCardFromHandOrField(c1id);
+    const r2 = removeCardFromHandOrField(c2id);
+
+    if (!r1) console.warn('No se encontró c1 para remover:', c1id);
+    if (!r2) console.warn('No se encontró c2 para remover:', c2id);
+
+    // añadir resultado a la mano (si no existe)
+    const added = pushResultToHandOnce(resid);
+    console.log('Result añadido a mano?', added, 'resultId:', resid);
+
+    logMessage(
+      `La IA fusiona "${CARD_BY_ID[c1id]?.name ?? c1id}" + "${CARD_BY_ID[c2id]?.name ?? c2id}" → "${CARD_BY_ID[resid]?.name ?? resid}".`
+    );
+
+    // si además la decision pedía invocar el resultado en el mismo turno
+    if (decision.summon.slot !== undefined && decision.summon.slot !== null) {
+      const desiredSlot = decision.summon.slot;
+      // sacar de mano el result antes de invocar
+      const idxResInHand = gameState.ai.hand.findIndex(h => (typeof h === 'string' ? h === resid : (h && h.id === resid)));
+      if (idxResInHand !== -1) {
+        gameState.ai.hand.splice(idxResInHand, 1);
+      } else {
+        // tal vez el result estaba ya en la mano antes (no fue añadido) -> intentar invocar igualmente
+        console.warn('Result no encontrado en mano al intentar invocar, pero continuamos intentando invocar.', resid);
+      }
+
+      // elegir slot valido
+      let targetSlot = desiredSlot;
+      if (
+        typeof targetSlot !== 'number' ||
+        targetSlot < 0 ||
+        targetSlot >= MAX_MONSTER_SLOTS ||
+        gameState.ai.field[targetSlot]
+      ) {
+        targetSlot = gameState.ai.field.findIndex(c => !c);
+      }
+      if (targetSlot !== -1) {
+        gameState.ai.field[targetSlot] = resid;
+        logMessage(`La IA invoca ${CARD_BY_ID[resid].name}.`);
+      } else {
+        logMessage('La IA intentó invocar pero no tiene espacio en el campo.');
+      }
+    }
+  }
+  // Caso 2: decision contiene jugada simple (summon.card)
+  else if (decision.summon && decision.summon.card) {
+    const cardId = normalizeId(decision.summon.card);
+    const desiredSlot = decision.summon.slot;
+    // eliminar de mano (si existe) y poner en campo
+    const idx = gameState.ai.hand.findIndex(h => (typeof h === 'string' ? h === cardId : (h && h.id === cardId)));
     if (idx !== -1) gameState.ai.hand.splice(idx, 1);
 
-    let targetSlot = slot;
+    let targetSlot = desiredSlot;
     if (
       typeof targetSlot !== 'number' ||
       targetSlot < 0 ||
@@ -474,17 +601,24 @@ function applyAIDecision(decision) {
     }
 
     if (targetSlot !== -1) {
-      gameState.ai.field[targetSlot] = card;
-      logMessage(`La IA invoca ${CARD_BY_ID[card].name}.`);
+      gameState.ai.field[targetSlot] = cardId;
+      logMessage(`La IA invoca ${CARD_BY_ID[cardId].name}.`);
     } else {
       logMessage('La IA intentó invocar pero no tiene espacio en el campo.');
     }
   }
 
+  // Si la decision incluye battle_phase
   if (decision.battle_phase) {
     resolveBattlePhase('ai');
   }
+
+  console.log('AI hand después:', JSON.parse(JSON.stringify(gameState.ai.hand)));
+  console.log('AI field después:', JSON.parse(JSON.stringify(gameState.ai.field)));
+  console.groupEnd();
 }
+
+
 
 // IA de respaldo en JS si falla el backend Python
 function fallbackLocalAIDecision() {
@@ -570,7 +704,7 @@ function initGame(deckSize = null) {
   } else {
     deckSize = currentDeckSize;
   }
-
+  
   gameState.turn = 'player';
   gameState.phase = 'main';
   gameState.player.life = 8000;
@@ -609,7 +743,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const exitBtn = document.getElementById('btn-exit');
   const startGameBtn = document.getElementById('btn-start-game');
   const deckSizeInput = document.getElementById('deck-size-input');
-
+  const fusionToggleBtn = document.getElementById('btn-toggle-fusion');
+  
   // Configurar tamaño de mazo e iniciar duelo
   if (startGameBtn && deckSizeInput) {
     startGameBtn.addEventListener('click', () => {
@@ -650,4 +785,16 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.appendChild(msg);
     });
   }
+
+  if (fusionToggleBtn) {
+    fusionToggleBtn.addEventListener('click', () => {
+      gameState.fusionMode = !gameState.fusionMode;
+      fusionToggleBtn.textContent = `Modo Fusión: ${gameState.fusionMode ? 'ON' : 'OFF'}`;
+      // cancelar selección si apaga modo fusión
+      if (!gameState.fusionMode) {
+        gameState.fusionFirstIndex = null;
+      }
+      render();
+    });
+  }  
 });
