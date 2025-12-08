@@ -1,10 +1,12 @@
-// Lógica principal del duelo + integración con IA en Python
-
 const MAX_MONSTER_SLOTS = 5;
 const DEFAULT_DECK_SIZE = 20; // tamaño por defecto del mazo (máximo 40)
 const INITIAL_HAND_SIZE = 5;
 
 let currentDeckSize = DEFAULT_DECK_SIZE;
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 // Estado global del juego
 const gameState = {
@@ -356,7 +358,7 @@ function handleFusionClick(handIndex) {
 }
 
 // Resuelve la fase de batalla para 'player' o 'ai'
-function resolveBattlePhase(attackerKey) {
+async function resolveBattlePhase(attackerKey) {
   if (gameState.turn === 'ended') return;
 
   const defenderKey = otherPlayer(attackerKey);
@@ -368,6 +370,10 @@ function resolveBattlePhase(attackerKey) {
       ? 'Fase de batalla: atacan tus monstruos.'
       : 'Fase de batalla: atacan los monstruos de la IA.'
   );
+
+  // Refrescamos antes de empezar
+  render();
+  await sleep(400);
 
   for (let i = 0; i < MAX_MONSTER_SLOTS; i++) {
     const atkId = attackerField[i];
@@ -414,10 +420,11 @@ function resolveBattlePhase(attackerKey) {
       );
     }
 
-    if (checkGameEnd()) {
-      render();
-      return;
-    }
+    render();
+    if (checkGameEnd()) return;
+
+    // Pausa corta entre cada ataque
+    await sleep(400);
   }
 
   render();
@@ -464,7 +471,7 @@ function endTurn() {
 }
 
 // Aplica la decisión de la IA devuelta por el backend
-function applyAIDecision(decision) {
+async function applyAIDecision(decision) {
   if (!decision) return;
 
   console.group('AI Decision apply');
@@ -606,12 +613,17 @@ function applyAIDecision(decision) {
     } else {
       logMessage('La IA intentó invocar pero no tiene espacio en el campo.');
     }
+
+        // Pausa para que se vea la invocación de la IA
+    await sleep(600);
   }
 
   // Si la decision incluye battle_phase
   if (decision.battle_phase) {
+    await sleep(600);
     resolveBattlePhase('ai');
   }
+
 
   console.log('AI hand después:', JSON.parse(JSON.stringify(gameState.ai.hand)));
   console.log('AI field después:', JSON.parse(JSON.stringify(gameState.ai.field)));
@@ -656,6 +668,8 @@ async function aiTurn() {
   const drawn = drawCard('ai');
   if (drawn) {
     logMessage('La IA roba una carta.');
+    render();
+    await sleep(500); // Pausa leve al robar carta
   }
 
   let decision = null;
@@ -675,24 +689,31 @@ async function aiTurn() {
 
     decision = await response.json();
     logMessage('La IA ha calculado su jugada (Python).');
+
   } catch (err) {
     console.error('Error llamando a la IA en Python:', err);
     logMessage('Error con la IA en Python. Usando IA local de respaldo.');
     decision = fallbackLocalAIDecision();
+    render();
+    await sleep(400);
   }
 
-  applyAIDecision(decision);
+  await applyAIDecision(decision);
   render();
 
   if (gameState.turn !== 'ended') {
     gameState.turn = 'player';
+
     const drawnP = drawCard('player');
     if (drawnP) {
       logMessage(`Robas carta: ${CARD_BY_ID[drawnP].name}.`);
     }
+
     render();
+    await sleep(300); // Pausa ligera de transición de turno
   }
 }
+
 
 // ---------- Inicialización ----------
 

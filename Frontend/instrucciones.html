@@ -17,53 +17,98 @@
 
     <div class="card">
 
+      <!-- OBJETIVO -->
       <section>
         <h2>🎯 Objetivo</h2>
-        <p>Reduce los <strong>Puntos de Vida (LP)</strong> del oponente a 0 utilizando monstruos y fusiones estratégicas.</p>
+        <p>
+          Reduce los <strong>Puntos de Vida (LP)</strong> del oponente a 0 utilizando monstruos, fusiones estratégicas
+          y decisiones inteligentes durante el duelo.
+        </p>
       </section>
 
+      <!-- MECÁNICAS BÁSICAS -->
       <section>
         <h2>🃏 Mecánicas Básicas</h2>
         <ul>
-          <li>Ambos inician con <strong>8000 LP</strong>.</li>
-          <li>Mazos configurables de <strong>15 a 40 cartas</strong>.</li>
-          <li>Robas 5 cartas al comenzar.</li>
-          <li>Puedes invocar un monstruo por turno.</li>
+          <li>Ambos jugadores comienzan con <strong>8000 LP</strong>.</li>
+          <li>Puedes elegir un mazo entre <strong>15 y 40 cartas</strong>.</li>
+          <li>Robas <strong>5 cartas</strong> al iniciar la partida.</li>
+          <li>Puedes invocar <strong>un monstruo por turno</strong>.</li>
         </ul>
       </section>
 
+      <!-- BATALLAS -->
       <section>
         <h2>⚔️ Batallas</h2>
         <ul>
-          <li>Los monstruos atacan al que está frente a ellos.</li>
-          <li>Si no hay defensor → <strong>ataque directo</strong>.</li>
-          <li>Daño = ATK más alto − ATK más bajo.</li>
+          <li>Los monstruos atacan al que está directamente frente a ellos.</li>
+          <li>Si no hay un monstruo defendiendo → <strong>ataque directo</strong>.</li>
+          <li>El daño se calcula como: <strong>ATK más alto − ATK más bajo</strong>.</li>
         </ul>
       </section>
 
+      <!-- FUSIONES -->
       <section>
         <h2>🧪 Fusiones</h2>
-        <p>Para fusionar:</p>
+        <p>Para fusionar dos cartas:</p>
         <ol>
-          <li>Activa <strong>Modo Fusión</strong>.</li>
-          <li>Elige dos cartas de la mano.</li>
-          <li>Si existe una combinación válida → aparece el monstruo fusionado.</li>
+          <li>Activa el <strong>Modo Fusión</strong>.</li>
+          <li>Selecciona dos cartas de tu mano.</li>
+          <li>Si la combinación es válida, aparece un monstruo fusionado más fuerte.</li>
         </ol>
       </section>
 
+      <!-- ESTRUCTURA DEL TURNO -->
       <section>
         <h2>🔁 Estructura del Turno</h2>
         <ul>
-          <li>Invocar</li>
-          <li>Fusionar (opcional)</li>
-          <li>Batalla</li>
-          <li>Terminar turno</li>
+          <li>Invocar un monstruo.</li>
+          <li>Fusionar cartas (opcional).</li>
+          <li>Declarar ataques.</li>
+          <li>Terminar turno para que juegue la IA.</li>
         </ul>
       </section>
 
+      <!-- COMO GANAR -->
       <section>
         <h2>🏆 Cómo Ganar</h2>
-        <p>Derrotas al oponente cuando sus <strong>LP llegan a 0</strong>.</p>
+        <p>
+          El duelo termina cuando los <strong>LP del oponente llegan a 0</strong>.  
+          También puedes ganar si la IA se queda sin cartas que robar.
+        </p>
+      </section>
+
+      <!-- IA Y MINIMAX -->
+      <section>
+        <h2>🧠 ¿Cómo piensa la IA?</h2>
+
+        <p>
+          La IA utiliza un sistema de análisis estratégico llamado
+          <strong>Minimax con poda alfa–beta</strong>, parecido a lo que usan juegos como ajedrez.
+          Su objetivo es elegir siempre la jugada que la deja en mejor posición.
+        </p>
+
+        <h3 class="sub">📌 ¿Qué analiza la IA?</h3>
+        <ul>
+          <li>Las cartas en su mano y en su campo.</li>
+          <li>Tus monstruos y tus puntos de vida.</li>
+          <li>Fusiones posibles y jugadas futuras.</li>
+          <li>Si conviene atacar, fusionar, invocar o pasar turno.</li>
+        </ul>
+
+        <h3 class="sub">🎲 ¿Qué factores evalúa?</h3>
+        <ul>
+          <li><strong>Diferencia de LP</strong> entre ambos jugadores.</li>
+          <li><strong>Fuerza total del campo</strong> (ATK acumulado).</li>
+          <li><strong>Cantidad de monstruos activos</strong>.</li>
+          <li><strong>Valor de fusiones posibles</strong> en la mano.</li>
+        </ul>
+
+        <p>
+          Gracias a este sistema, la IA <strong>no juega al azar</strong>: piensa, compara
+          y elige la jugada más ventajosa.
+        </p>
+
       </section>
 
     </div>

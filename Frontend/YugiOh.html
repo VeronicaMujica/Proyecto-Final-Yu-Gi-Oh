@@ -74,25 +74,26 @@
           <button id="btn-toggle-fusion" class="btn btn-secondary">Modo Fusión: OFF</button>
         </div>
 
-          <div class="panel">
-        <h3>Navegación</h3>
+        <div class="panel">
+          <h3>Navegación</h3>
 
-        <button class="btn" style="width: 100%; margin-bottom: 8px;"
-          onclick="window.location.href='../Frontend/index.html'">
-          Inicio
-        </button>
+          <button class="btn" style="width: 100%; margin-bottom: 8px;"
+            onclick="window.location.href='../Frontend/index.html'">
+            Inicio
+          </button>
 
-        <button class="btn" style="width: 100%; margin-bottom: 8px;"
-          onclick="window.location.href='../Frontend/instrucciones.html'">
-          Instrucciones
-        </button>
+          <button class="btn" style="width: 100%; margin-bottom: 8px;"
+            onclick="window.location.href='../Frontend/instrucciones.html'">
+            Instrucciones
+          </button>
 
-        <button class="btn" style="width: 100%; margin-bottom: 8px;"
-          onclick="window.location.href='../Frontend/fusiones.html'">
-          Fusiones
-        </button>
+          <!-- 🔹 AHORA ESTE BOTÓN ABRE UN MODAL, NO CAMBIA DE PÁGINA -->
+          <button class="btn" style="width: 100%; margin-bottom: 8px;"
+            id="btn-open-fusions">
+            Fusiones
+          </button>
 
-      </div>
+        </div>
 
         <div class="panel">
           <h3>Log</h3>
@@ -135,11 +136,14 @@
     </main>
   </div>
 
+  <!-- Scripts del juego -->
   <script src="../Backend/cards.js"></script>
   <script src="js/game.js"></script>
- 
+
+  <!-- FX daño -->
   <div id="damage-fx" class="damage-fx"></div>
 
+  <!-- Modal fin de partida -->
   <div id="end-modal" class="modal">
     <div class="modal-content">
       <h2>Partida terminada</h2>
@@ -151,5 +155,96 @@
       </div>
     </div>
   </div>
+
+  <!-- 🔹 NUEVO: MODAL DE FUSIONES -->
+  <div id="fusion-modal" class="modal">
+    <div class="modal-content" style="max-width: 520px; text-align: left;">
+      <h2 style="margin-bottom:6px;">Guía de Fusiones</h2>
+      <p style="margin-bottom:12px; font-size:0.9rem; color:#9ca3af;">
+        Consulta las combinaciones sin salir del duelo.
+      </p>
+
+      <div style="max-height: 320px; overflow-y: auto; font-size: 0.85rem; padding-right:4px;">
+        <h3 style="color:#38bdf8; margin-top:10px;">🐲 Dragones</h3>
+        <ul style="margin-left:18px; margin-bottom:8px;">
+          <li><strong>Bebé Dragón</strong> + <strong>Mago del Tiempo</strong> → Dragón Milenario</li>
+          <li><strong>Bebé Dragón</strong> + <strong>Dragón Alado</strong> → Dragón Milenario</li>
+          <li><strong>Bebé Dragón</strong> + <strong>Dragón de Koumori</strong> → Dragón Milenario</li>
+          <li><strong>Bebé Dragón</strong> + <strong>Dragón de Fuego de la Tierra Negra</strong> → Dragón Milenario</li>
+          <li><strong>Bebé Dragón</strong> + <strong>Dragón Blanco de Ojos Azules</strong> → Dragón Milenario</li>
+        </ul>
+
+        <h3 style="color:#38bdf8; margin-top:10px;">⚔️ Caballeros / Dragón</h3>
+        <ul style="margin-left:18px; margin-bottom:8px;">
+          <li><strong>Gaia el Caballero Feroz</strong> + <strong>Maldición de Dragón</strong> → Gaia el Campeón Dragón</li>
+          <li><strong>Guardián Celta</strong> + <strong>Maldición de Dragón</strong> → Gaia el Campeón Dragón</li>
+        </ul>
+
+        <h3 style="color:#38bdf8; margin-top:10px;">🦋 Insectos</h3>
+        <ul style="margin-left:18px; margin-bottom:8px;">
+          <li><strong>Larva de Moth</strong> + <strong>Insecto Básico</strong> → Gran Moth</li>
+          <li><strong>Larva de Moth</strong> + <strong>Insecto Grande</strong> → Gran Moth</li>
+          <li><strong>Larva de Moth</strong> + <strong>Escarabajo Hércules</strong> → Gran Moth</li>
+          <li><strong>Gran Moth</strong> + <strong>Capullo Evolutivo</strong> → Gran Moth Definitivo Perfecto</li>
+          <li><strong>Escarabajo Hércules</strong> + <strong>Capullo Evolutivo</strong> → Gran Moth Definitivo Perfecto</li>
+        </ul>
+
+        <h3 style="color:#38bdf8; margin-top:10px;">👹 Demonios / No-Muertos</h3>
+        <ul style="margin-left:18px; margin-bottom:8px;">
+          <li><strong>Diablillo de Cuerno</strong> + <strong>Sirviente de la Calavera</strong> → Cráneo Convocado</li>
+          <li><strong>Diablo Salvaje</strong> + <strong>Espectro de Sombra</strong> → Cráneo Convocado</li>
+          <li><strong>Sangan</strong> + <strong>Ryu-Kishin</strong> → Cráneo Convocado</li>
+        </ul>
+
+        <h3 style="color:#38bdf8; margin-top:10px;">🦁 Bestias</h3>
+        <ul style="margin-left:18px; margin-bottom:8px;">
+          <li><strong>Buey de Batalla</strong> + <strong>Guerrero de la Montaña</strong> → Garoozis</li>
+          <li><strong>Griffore</strong> + <strong>Hacha del Tigre</strong> → Garoozis</li>
+        </ul>
+
+        <h3 style="color:#38bdf8; margin-top:10px;">🦖 Dinosaurios</h3>
+        <ul style="margin-left:18px; margin-bottom:8px;">
+          <li><strong>Rey de Dos Cabezas Rex</strong> + <strong>Brazo de Espada de Dragón</strong> → Megazowler</li>
+          <li><strong>Uraby</strong> + <strong>Brazo de Espada de Dragón</strong> → Megazowler</li>
+        </ul>
+
+        <h3 style="color:#38bdf8; margin-top:10px;">🌊 Reptiles / Agua</h3>
+        <ul style="margin-left:18px; margin-bottom:8px;">
+          <li><strong>Krokodilus</strong> + <strong>Adicto Kraken</strong> → Kairyu-Shin</li>
+        </ul>
+      </div>
+
+      <div class="modal-actions" style="margin-top:14px;">
+        <button id="btn-close-fusions" class="btn">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔹 Script para abrir/cerrar modal de fusiones -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const fusionModal = document.getElementById('fusion-modal');
+      const openFusionBtn = document.getElementById('btn-open-fusions');
+      const closeFusionBtn = document.getElementById('btn-close-fusions');
+
+      if (openFusionBtn && fusionModal && closeFusionBtn) {
+        openFusionBtn.addEventListener('click', () => {
+          fusionModal.classList.add('show');
+        });
+
+        closeFusionBtn.addEventListener('click', () => {
+          fusionModal.classList.remove('show');
+        });
+
+        // Cerrar clicando fuera de la tarjeta
+        fusionModal.addEventListener('click', (e) => {
+          if (e.target === fusionModal) {
+            fusionModal.classList.remove('show');
+          }
+        });
+      }
+    });
+  </script>
+
 </body>
 </html>

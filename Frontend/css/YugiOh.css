@@ -389,6 +389,11 @@ body {
   animation: cardAttack 0.25s ease-out;
 }
 
+.card.defending {
+  box-shadow: 0 0 18px rgba(248, 113, 113, 0.9);
+  transform: scale(1.02);
+}
+
 .damage-fx {
   position: fixed;
   top: 40%;
