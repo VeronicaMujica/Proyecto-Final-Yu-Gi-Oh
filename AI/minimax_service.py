@@ -1,14 +1,31 @@
+"""
+====================================================
+  MOTOR DE INTELIGENCIA ARTIFICIAL (Yu-Gi-Oh!)
+  Descripción:
+      Servicio Flask que implementa IA por Minimax,
+      fusiones, jugadas posibles, simulación de turnos,
+      y lógica de combate simplificada.
+====================================================
+"""
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import copy
 import time
 
-app = Flask(__name__)
-CORS(app)
+app = Flask(__name__) # Iniciar aplicación Flask
+CORS(app)             # Habilitar CORS para todas las rutas
 
-# =========================================
-# REGLAS DE FUSIÓN
-# =========================================
+
+# ====================================================
+#                     REGLAS DE FUSIÓN
+# ====================================================
+"""
+Cada entrada del arreglo FUSION_RULES tiene la forma:
+    ((CARTA_A, CARTA_B), RESULTADO)
+
+El orden de las cartas no importa.
+"""
 FUSION_RULES = [
     # 1) Mago del Tiempo + Bebé Dragón → Dragón Milenario
     (('MAGO_DEL_TIEMPO', 'BEBE_DRAGON'), 'DRAGON_MILENARIO'),
@@ -59,19 +76,34 @@ FUSION_RULES = [
     (('BRAZO_DE_ESPADA_DE_DRAGON', 'ADICTO_KRAKEN'), 'KAIRYU_SHIN'),
 ]
 
+
+"""
+    Determina si dos IDs de cartas producen una fusión válida.
+
+    Parámetros:
+        id1 (str) - ID de la primera carta.
+        id2 (str) - ID de la segunda carta.
+
+    Retorno:
+        str | None - ID del resultado de la fusión, o None si no existe.
+    """
 def fusion_result_id(id1, id2):
+    # Evitar fusionar la misma carta
     if id1 == id2:
         return None
+    # Buscar en reglas de fusión
     for (pair, res) in FUSION_RULES:
+        # Desempaquetar la pareja de cartas por fusionar
         a, b = pair
+        # Verificar si coinciden (sin importar el orden)
         if (a == id1 and b == id2) or (a == id2 and b == id1):
             return res
     return None
 
 
-# =========================================
-# DATOS DE CARTAS — SOLO STATS NECESARIOS
-# =========================================
+# ============================================
+#   DATOS DE CARTAS — SOLO STATS NECESARIOS
+# ============================================
 def lookup_card_stub(card_id):
     presets = {
         'DRAGON_MILENARIO': {'id':'DRAGON_MILENARIO','atk':2400,'def':2000},
@@ -92,28 +124,41 @@ def lookup_card_stub(card_id):
 
 
 # =========================================
-# CONVERSIONES DE ENTRADA
+#       CONVERSIONES DE ENTRADA
 # =========================================
+
+"""
+El frontend puede enviar cartas como:
+    "BEBE_DRAGON"
+    { "id": "BEBE_DRAGON" }
+
+Estas funciones normalizan el formato.
+"""
+# función para convertir la mano
 def convert_hand(hand_list):
     result = []
+    # Iterar cartas en mano
     for c in hand_list:
         if c is None:
             continue
 
         # Si viene como {"id": "..."}
         if isinstance(c, dict) and "id" in c:
+            # Hace extracto del ID como card_id
             card_id = c["id"]
         # Si viene como "ID"
         elif isinstance(c, str):
+            # Asigna directamente el ID
             card_id = c
         else:
+            # Ignorar formato inválido
             continue
-
+        # Agregar extracto de carta al resultado
         result.append(lookup_card_stub(card_id))
-
+    # Retornar lista de cartas convertidas
     return result
 
-
+# función para convertir el campo de juego
 def convert_field(field_list):
     result = []
     for c in field_list:
@@ -137,16 +182,30 @@ def convert_field(field_list):
     return result
 
 
-# =========================================
-# EVALUACIÓN DEL ESTADO
-# =========================================
+# ====================================================
+#            EVALUACIÓN DEL ESTADO (Heurística)
+# ====================================================
+"""
+Evalúa un estado del tablero desde la perspectiva de la IA:
+
+Factores:
+- Diferencia de vida
+- Fuerza total en campo
+- Monstruos en campo
+- Fusiones disponibles en mano
+
+Mientras mayor sea el valor → mejor para la IA.
+"""
 def evaluate_state(state):
+    # Calcular puntuación heurística
     score = 0
 
+    # Bonus por vida
     ai_lp = state["ai"]["life"]
     p_lp = state["player"]["life"]
     score += (ai_lp - p_lp) * 0.05
 
+    # Bonus por ataque total en campo
     ai_atk = sum(c["atk"] for c in state["ai"]["field"] if c)
     p_atk = sum(c["atk"] for c in state["player"]["field"] if c)
     score += (ai_atk - p_atk) * 2.0
@@ -168,22 +227,29 @@ def evaluate_state(state):
     return score
 
 
-# =========================================
-# MOVIMIENTOS POSIBLES
-# =========================================
+# ====================================================
+#                 GENERAR MOVIMIENTOS
+# ====================================================
+"""
+Devuelve la lista de todas las acciones posibles:
+- Jugar un monstruo
+- Hacer una fusión
+- Atacar
+- Pasar turno
+"""
 MAX_MONSTER_SLOTS = 5
-
+# Generar movimientos posibles
 def generate_moves(state, is_ai):
     hand = state["ai"]["hand"] if is_ai else state["player"]["hand"]
     field = state["ai"]["field"] if is_ai else state["player"]["field"]
     moves = []
 
-    # Jugar carta
+    # Invocar monstruo si hay espacio
     if any(c is None for c in field):
         for c in hand:
             moves.append({"type": "play", "card_id": c["id"]})
 
-    # Fusión
+    # Fusiones posibles
     for i in range(len(hand)):
         for j in range(i+1, len(hand)):
             res = fusion_result_id(hand[i]["id"], hand[j]["id"])
@@ -194,20 +260,27 @@ def generate_moves(state, is_ai):
                     "c2": hand[j]["id"],
                     "result": res
                 })
-
+    # Combatir y pasar turno
     moves.append({"type": "attack"})
     moves.append({"type": "pass"})
     return moves
 
 
-# =========================================
-# APLICAR MOVIMIENTO
-# =========================================
+# ====================================================
+#         APLICAR UNA JUGADA AL ESTADO (Simulación)
+# ====================================================
 def apply_move(state, move, is_ai):
+    """
+    Devuelve un nuevo estado luego de aplicar la acción.
+    Sirve para que el Minimax pueda simular escenarios.
+    """
     s = copy.deepcopy(state)
     hand = s["ai"]["hand"] if is_ai else s["player"]["hand"]
     field = s["ai"]["field"] if is_ai else s["player"]["field"]
-
+    
+    # ------------------------------
+    # Invocar carta
+    # ------------------------------
     if move["type"] == "play":
         card = next((c for c in hand if c["id"] == move["card_id"]), None)
         if card:
@@ -216,6 +289,9 @@ def apply_move(state, move, is_ai):
             if slot is not None:
                 field[slot] = card
 
+    # ------------------------------
+    # Fusión
+    # ------------------------------
     elif move["type"] == "fusion":
         c1 = next((c for c in hand if c["id"]==move["c1"]), None)
         c2 = next((c for c in hand if c["id"]==move["c2"]), None)
@@ -233,6 +309,9 @@ def apply_move(state, move, is_ai):
             else:
                 hand.append(result)
 
+    # ------------------------------
+    # Ataque directo o por posiciones
+    # ------------------------------
     elif move["type"] == "attack":
         atk_field = s["ai"]["field"] if is_ai else s["player"]["field"]
         def_field = s["player"]["field"] if is_ai else s["ai"]["field"]
@@ -262,15 +341,28 @@ def apply_move(state, move, is_ai):
     return s
 
 
-# =========================================
-# MINIMAX
-# =========================================
+# ====================================================
+#                     MINIMAX + PODA
+# ====================================================
+"""
+Algoritmo Minimax con poda alfa-beta.
+
+depth  - Profundidad de búsqueda.
+maximizing - Si la IA está maximizando o minimizando.
+limit - Tiempo máximo por cálculo (seguridad).
+
+"""
 def minimax(state, depth, alpha, beta, maximizing, start_time, limit=0.45):
+    # Condición de parada
     if depth == 0 or time.time() - start_time > limit:
         return evaluate_state(state), None
 
     moves = generate_moves(state, maximizing)
     best = None
+
+    # --------------------------------
+    # MAX (IA)
+    # --------------------------------
 
     if maximizing:
         best_val = -1e9
@@ -284,9 +376,12 @@ def minimax(state, depth, alpha, beta, maximizing, start_time, limit=0.45):
             if alpha >= beta:
                 break
         return best_val, best
-
+    
+    # --------------------------------
+    # MIN (Jugador)
+    # --------------------------------
     else:
-        best_val = 1e9
+        best_val = 1e9 
         for m in moves:
             c = apply_move(state, m, False)
             val, _ = minimax(c, depth-1, alpha, beta, True, start_time)
@@ -299,16 +394,17 @@ def minimax(state, depth, alpha, beta, maximizing, start_time, limit=0.45):
         return best_val, best
 
 
-# =========================================
-# ENDPOINT DE IA
-# =========================================
+# ====================================================
+#               ENDPOINT DE MOVIMIENTO IA
+# ====================================================
 @app.post("/ai-move")
 def ai_move():
     payload = request.get_json()
 
     if not payload:
         return jsonify({"error": "no state received"}), 400
-
+    
+    # Normalizar estructura del estado
     state = {
         "ai": {
             "life": payload["ai"]["life"],
@@ -326,7 +422,9 @@ def ai_move():
 
     decision = {"summon": None, "battle_phase": False}
 
+    # Construcción de la respuesta según la mejor jugada
     if best:
+        # Fusión
         if best["type"] == "fusion":
             decision["summon"] = {
                 "fusion": {
@@ -337,22 +435,23 @@ def ai_move():
                 "slot": next((i for i,c in enumerate(state["ai"]["field"]) if c is None), None)
             }
             decision["battle_phase"] = True
-
+        # Invocación 
         elif best["type"] == "play":
             decision["summon"] = {
                 "card": best["card_id"],
                 "slot": next((i for i,c in enumerate(state["ai"]["field"]) if c is None), 0)
             }
             decision["battle_phase"] = True
-
+        # Ataque
         elif best["type"] == "attack":
             decision["battle_phase"] = True
 
     return jsonify(decision)
 
 
-# =========================================
-# INICIAR SERVIDOR
-# =========================================
+# ====================================================
+#                   INICIO DEL SERVIDOR
+# ====================================================
 if __name__ == "__main__":
+    # Ejecutar la aplicación Flask
     app.run(host="0.0.0.0", port=8000)
