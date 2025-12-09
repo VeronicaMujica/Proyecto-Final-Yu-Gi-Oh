@@ -10,26 +10,53 @@ CORS(app)
 # REGLAS DE FUSIÓN
 # =========================================
 FUSION_RULES = [
-    (('BEBE_DRAGON', 'MAGO_DEL_TIEMPO'), 'DRAGON_MILENARIO'),
+    # 1) Mago del Tiempo + Bebé Dragón → Dragón Milenario
+    (('MAGO_DEL_TIEMPO', 'BEBE_DRAGON'), 'DRAGON_MILENARIO'),
+    
+    # 2) Gaia el Caballero Feroz + Maldición de Dragón → Gaia el Campeón Dragón
     (('GAIA_EL_CABALLERO_FEROZ', 'MALDICION_DE_DRAGON'), 'GAIA_EL_CAMPEON_DRAGON'),
-    (('GUARDIAN_CELTA', 'MALDICION_DE_DRAGON'), 'GAIA_EL_CAMPEON_DRAGON'),
-    (('BEBE_DRAGON', 'DRAGON_ALADO'), 'DRAGON_MILENARIO'),
-    (('BEBE_DRAGON', 'DRAGON_DE_KOUMORI'), 'DRAGON_MILENARIO'),
-    (('BEBE_DRAGON', 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA'), 'DRAGON_MILENARIO'),
-    (('BEBE_DRAGON', 'DRAGON_BLANCO_DE_OJOS_AZULES'), 'DRAGON_MILENARIO'),
+    
+    # 3) Tyhone #2 + Sirviente de la Calavera → Maldición de Dragón
+    (('TYHONE_2', 'SIRVIENTE_DE_LA_CALAVERA'), 'MALDICION_DE_DRAGON'),
+    
+    # 4) Buey de Batalla + Huevo Monstruo → Bebé Dragón
+    (('BUEY_DE_BATALLA', 'HUEVO_MONSTRUO'), 'BEBE_DRAGON'),
+    
+    # 5) Bebé Dragón + Gigante Hitotsu-Me → Dragón de Koumori
+    (('BEBE_DRAGON', 'GIGANTE_HITOTSU_ME'), 'DRAGON_DE_KOUMORI'),
+    
+    # 6) La Mano del Juicio + Guardián Celta → Hombre Juez
+    (('LA_MANO_DEL_JUICIO', 'GUARDIAN_CELTA'), 'HOMBRE_JUEZ'),
+    
+    # 7) Alma de Hinotama + Sirviente de la Calavera → Segador de Fuego
+    (('ALMA_DE_HINOTAMA', 'SIRVIENTE_DE_LA_CALAVERA'), 'SEGADOR_DE_FUEGO'),
+    
+    # 8–10) Evolución de insectos → Gran Moth
     (('LARVA_DE_MOTH', 'INSECTO_BASICO'), 'GRAN_MOTH'),
     (('LARVA_DE_MOTH', 'INSECTO_GRANDE'), 'GRAN_MOTH'),
     (('LARVA_DE_MOTH', 'ESCARABAJO_HERCULES'), 'GRAN_MOTH'),
+    
+    # 11–12) Gran Moth + Capullo / insecto tanque → Gran Moth Definitivo Perfecto
     (('GRAN_MOTH', 'CAPULLO_EVOLUTIVO'), 'GRAN_MOTH_DEFINITIVO_PERFECTO'),
     (('ESCARABAJO_HERCULES', 'CAPULLO_EVOLUTIVO'), 'GRAN_MOTH_DEFINITIVO_PERFECTO'),
-    (('DIABLILLO_DE_CUERNO', 'SIRVIENTE_DE_LA_CALAVERA'), 'CRANEO_CONVOCADO'),
-    (('DIABLO_SALVAJE', 'ESPECTRO_DE_SOMBRA'), 'CRANEO_CONVOCADO'),
-    (('SANGAN', 'RYU-KISHIN'), 'CRANEO_CONVOCADO'),
-    (('BUEY_DE_BATALLA', 'GUERRERO_DE_LA_MONTAÑA'), 'GAROOZIS'),
-    (('GRIFFORE', 'HACHA_DEL_TIGRE'), 'GAROOZIS'),
-    (('REY_DE_DOS_CABEZAS_REX', 'BRAZO_DE_ESPADA_DE_DRAGON'), 'MEGAZOWLER'),
-    (('URABY', 'BRAZO_DE_ESPADA_DE_DRAGON'), 'MEGAZOWLER'),
-    (('KROKODILUS', 'ADICTO_KRAKEN'), 'KAIRYU_SHIN'),
+    
+    # 13–14) Espejo de cambio de trabajo + Demonios → Cráneo Convocado
+    (('ESPEJO_CAMBIO_DE_TRABAJO', 'RYU-KISHIN'), 'CRANEO_CONVOCADO'),
+    (('ESPEJO_CAMBIO_DE_TRABAJO', 'DIABLILLO_DE_CUERNO'), 'CRANEO_CONVOCADO'),
+    
+    # 15) Mago del Tiempo + Bestia Embrionaria → Cráneo Convocado
+    (('MAGO_DEL_TIEMPO', 'BESTIA_EMBRIONARIA'), 'CRANEO_CONVOCADO'),
+    
+    # 16–17) Bebé Dragón + Piernas del Prohibido → Dragón de Fuego de la Tierra Negra
+    (('BEBE_DRAGON', 'PIERNA_DERECHA_DEL_PROHIBIDO'), 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA'),
+    (('BEBE_DRAGON', 'PIERNA_IZQUIERDA_DEL_PROHIBIDO'), 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA'),
+    
+    # 18–19) Dragón Alado + Brazos del Prohibido → Dragón de Fuego de la Tierra Negra
+    (('DRAGON_ALADO', 'BRAZO_DERECHO_DEL_PROHIBIDO'), 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA'),
+    (('DRAGON_ALADO', 'BRAZO_IZQUIERDO_DEL_PROHIBIDO'), 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA'),
+    
+    # 20) Brazo de Espada de Dragón + Adicto Kraken → Kairyu-Shin
+    (('BRAZO_DE_ESPADA_DE_DRAGON', 'ADICTO_KRAKEN'), 'KAIRYU_SHIN'),
 ]
 
 def fusion_result_id(id1, id2):
@@ -49,11 +76,15 @@ def lookup_card_stub(card_id):
     presets = {
         'DRAGON_MILENARIO': {'id':'DRAGON_MILENARIO','atk':2400,'def':2000},
         'GAIA_EL_CAMPEON_DRAGON': {'id':'GAIA_EL_CAMPEON_DRAGON','atk':2600,'def':2100},
+        'MALDICION_DE_DRAGON': {'id':'MALDICION_DE_DRAGON','atk':2000,'def':1500},
+        'BEBE_DRAGON': {'id':'BEBE_DRAGON','atk':1200,'def':700},
+        'DRAGON_DE_KOUMORI': {'id':'DRAGON_DE_KOUMORI','atk':1500,'def':1200},
+        'HOMBRE_JUEZ': {'id':'HOMBRE_JUEZ','atk':2200,'def':1500},
+        'SEGADOR_DE_FUEGO': {'id':'SEGADOR_DE_FUEGO','atk':700,'def':500},
         'GRAN_MOTH': {'id':'GRAN_MOTH','atk':2600,'def':2500},
         'GRAN_MOTH_DEFINITIVO_PERFECTO': {'id':'GRAN_MOTH_DEFINITIVO_PERFECTO','atk':3500,'def':3000},
         'CRANEO_CONVOCADO': {'id':'CRANEO_CONVOCADO','atk':2500,'def':1200},
-        'GAROOZIS': {'id':'GAROOZIS','atk':1800,'def':1500},
-        'MEGAZOWLER': {'id':'MEGAZOWLER','atk':1800,'def':2000},
+        'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA': {'id':'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA','atk':1500,'def':800},
         'KAIRYU_SHIN': {'id':'KAIRYU_SHIN','atk':1800,'def':1500},
     }
     # Si no está en presets, default genérico:

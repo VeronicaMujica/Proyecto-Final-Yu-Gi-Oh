@@ -2,45 +2,51 @@
 
 // Reglas de fusión (la lista que proporcionaste)
 const FUSION_RULES = window.FUSION_RULES || [
-    // 1) Bebé Dragón + Mago del Tiempo → Dragón Milenario
-    { inputs: ['BEBE_DRAGON', 'MAGO_DEL_TIEMPO'], result: 'DRAGON_MILENARIO' },
+   // 1) Mago del Tiempo + Bebé Dragón → Dragón Milenario
+  { inputs: ['MAGO_DEL_TIEMPO', 'BEBE_DRAGON'], result: 'DRAGON_MILENARIO' },
 
-    // 2) Gaia el Caballero Feroz + Maldición de Dragón → Gaia el Campeón Dragón
-    { inputs: ['GAIA_EL_CABALLERO_FEROZ', 'MALDICION_DE_DRAGON'], result: 'GAIA_EL_CAMPEON_DRAGON' },
+  // 2) Gaia el Caballero Feroz + Maldición de Dragón → Gaia el Campeón Dragón
+  { inputs: ['GAIA_EL_CABALLERO_FEROZ', 'MALDICION_DE_DRAGON'], result: 'GAIA_EL_CAMPEON_DRAGON' },
 
-    // 3) Guardián Celta + Maldición de Dragón → Gaia el Campeón Dragón (variante)
-    { inputs: ['GUARDIAN_CELTA', 'MALDICION_DE_DRAGON'], result: 'GAIA_EL_CAMPEON_DRAGON' },
+  // 3) Tyhone #2 + Sirviente de la Calavera → Maldición de Dragón
+  { inputs: ['TYHONE_2', 'SIRVIENTE_DE_LA_CALAVERA'], result: 'MALDICION_DE_DRAGON' },
 
-    // 4–7) Bebé Dragón + cualquier dragón fuerte → Dragón Milenario
-    { inputs: ['BEBE_DRAGON', 'DRAGON_ALADO'], result: 'DRAGON_MILENARIO', generic: 'Cualquier Dragón fuerte' },
-    { inputs: ['BEBE_DRAGON', 'DRAGON_DE_KOUMORI'], result: 'DRAGON_MILENARIO', generic: 'Cualquier Dragón fuerte' },
-    { inputs: ['BEBE_DRAGON', 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA'], result: 'DRAGON_MILENARIO', generic: 'Cualquier Dragón fuerte' },
-    { inputs: ['BEBE_DRAGON', 'DRAGON_BLANCO_DE_OJOS_AZULES'], result: 'DRAGON_MILENARIO', generic: 'Cualquier Dragón fuerte' },
+  // 4) Buey de Batalla + Huevo Monstruo → Bebé Dragón
+  { inputs: ['BUEY_DE_BATALLA', 'HUEVO_MONSTRUO'], result: 'BEBE_DRAGON' },
 
-    // 8–10) Evolución de insectos → Gran Moth
-    { inputs: ['LARVA_DE_MOTH', 'INSECTO_BASICO'], result: 'GRAN_MOTH', generic: 'Insecto grande / escarabajo' },
-    { inputs: ['LARVA_DE_MOTH', 'INSECTO_GRANDE'], result: 'GRAN_MOTH', generic: 'Insecto grande / escarabajo' },
-    { inputs: ['LARVA_DE_MOTH', 'ESCARABAJO_HERCULES'], result: 'GRAN_MOTH', generic: 'Insecto grande / escarabajo' },
+  // 5) Bebé Dragón + Gigante Hitotsu-Me → Dragón de Koumori
+  { inputs: ['BEBE_DRAGON', 'GIGANTE_HITOTSU_ME'], result: 'DRAGON_DE_KOUMORI' },
 
-    // 11–12) Gran Moth + Capullo / insecto tanque → Gran Moth Definitivo Perfecto
-    { inputs: ['GRAN_MOTH', 'CAPULLO_EVOLUTIVO'], result: 'GRAN_MOTH_DEFINITIVO_PERFECTO', generic: 'Capullo o Insecto Tanque' },
-    { inputs: ['ESCARABAJO_HERCULES', 'CAPULLO_EVOLUTIVO'], result: 'GRAN_MOTH_DEFINITIVO_PERFECTO', generic: 'Capullo o Insecto Tanque' },
+  // 6) La Mano del Juicio + Guardián Celta → Hombre Juez
+  { inputs: ['LA_MANO_DEL_JUICIO', 'GUARDIAN_CELTA'], result: 'HOMBRE_JUEZ' },
 
-    // 13–15) Demonios + zombis → Cráneo Convocado
-    { inputs: ['DIABLILLO_DE_CUERNO', 'SIRVIENTE_DE_LA_CALAVERA'], result: 'CRANEO_CONVOCADO', generic: 'Demonio / Zombi' },
-    { inputs: ['DIABLO_SALVAJE', 'ESPECTRO_DE_SOMBRA'], result: 'CRANEO_CONVOCADO', generic: 'Demonio / Zombi' },
-    { inputs: ['SANGAN', 'RYU-KISHIN'], result: 'CRANEO_CONVOCADO', generic: 'Demonio / Zombi' },
+  // 7) Alma de Hinotama + Sirviente de la Calavera → Segador de Fuego
+  { inputs: ['ALMA_DE_HINOTAMA', 'SIRVIENTE_DE_LA_CALAVERA'], result: 'SEGADOR_DE_FUEGO' },
 
-    // 16–17) Bestias / bestia-guerrero → Garoozis
-    { inputs: ['BUEY_DE_BATALLA', 'GUERRERO_DE_LA_MONTAÑA'], result: 'GAROOZIS', generic: 'Bestia / Bestia-Guerrero' },
-    { inputs: ['GRIFFORE', 'HACHA_DEL_TIGRE'], result: 'GAROOZIS', generic: 'Bestia / Bestia-Guerrero' },
+  // 8–10) Evolución de insectos → Gran Moth
+  { inputs: ['LARVA_DE_MOTH', 'INSECTO_BASICO'], result: 'GRAN_MOTH', generic: 'Insecto' },
+  { inputs: ['LARVA_DE_MOTH', 'INSECTO_GRANDE'], result: 'GRAN_MOTH', generic: 'Insecto' },
+  { inputs: ['LARVA_DE_MOTH', 'ESCARABAJO_HERCULES'], result: 'GRAN_MOTH', generic: 'Insecto' },
 
-    // 18–19) Dinosaurios + Brazo de Espada de Dragón → Megazowler
-    { inputs: ['REY_DE_DOS_CABEZAS_REX', 'BRAZO_DE_ESPADA_DE_DRAGON'], result: 'MEGAZOWLER', generic: 'Dinosaurio' },
-    { inputs: ['URABY', 'BRAZO_DE_ESPADA_DE_DRAGON'], result: 'MEGAZOWLER', generic: 'Dinosaurio' },
+  // 11–12) Gran Moth + Capullo / insecto tanque → Gran Moth Definitivo Perfecto
+  { inputs: ['GRAN_MOTH', 'CAPULLO_EVOLUTIVO'], result: 'GRAN_MOTH_DEFINITIVO_PERFECTO', generic: 'Capullo o Insecto fuerte' },
+  { inputs: ['ESCARABAJO_HERCULES', 'CAPULLO_EVOLUTIVO'], result: 'GRAN_MOTH_DEFINITIVO_PERFECTO', generic: 'Capullo o Insecto fuerte' },
 
-    // 20) Reptil de agua + Aqua → Kairyu-Shin
-    { inputs: ['KROKODILUS', 'ADICTO_KRAKEN'], result: 'KAIRYU_SHIN' }
+  // 13–15) Espejo de cambio + Demonios → Cráneo Convocado
+  { inputs: ['ESPEJO_CAMBIO_DE_TRABAJO', 'RYU_KISHIN'], result: 'CRANEO_CONVOCADO', generic: 'Demonio' },
+  { inputs: ['ESPEJO_CAMBIO_DE_TRABAJO', 'DIABLILLO_DE_CUERNO'], result: 'CRANEO_CONVOCADO', generic: 'Demonio' },
+  { inputs: ['MAGO_DEL_TIEMPO', 'BESTIA_EMBRIONARIA'], result: 'CRANEO_CONVOCADO', generic: 'Demonio o Criatura oscura' },
+
+  // 16–17) Bebé Dragón + Piernas del Prohibido → Dragón de Fuego de la Tierra Negra
+  { inputs: ['BEBE_DRAGON', 'PIERNA_DERECHA_DEL_PROHIBIDO'], result: 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA', generic: 'Parte del Prohibido' },
+  { inputs: ['BEBE_DRAGON', 'PIERNA_IZQUIERDA_DEL_PROHIBIDO'], result: 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA', generic: 'Parte del Prohibido' },
+
+  // 18–19) Dragón Alado + Brazos del Prohibido → Dragón de Fuego de la Tierra Negra
+  { inputs: ['DRAGON_ALADO', 'BRAZO_DERECHO_DEL_PROHIBIDO'], result: 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA', generic: 'Parte del Prohibido' },
+  { inputs: ['DRAGON_ALADO', 'BRAZO_IZQUIERDO_DEL_PROHIBIDO'], result: 'DRAGON_DE_FUEGO_DE_LA_TIERRA_NEGRA', generic: 'Parte del Prohibido' },
+
+  // 20) Brazo de Espada de Dragón + Adicto Kraken → Kairyu-Shin
+  { inputs: ['BRAZO_DE_ESPADA_DE_DRAGON', 'ADICTO_KRAKEN'], result: 'KAIRYU-SHIN' }
 ];
 
 
