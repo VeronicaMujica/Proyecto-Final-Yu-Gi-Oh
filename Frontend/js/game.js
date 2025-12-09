@@ -1,14 +1,47 @@
-const MAX_MONSTER_SLOTS = 5;
-const DEFAULT_DECK_SIZE = 20; // tamaño por defecto del mazo (máximo 40)
-const INITIAL_HAND_SIZE = 5;
+/**
+ * ---------------------------------------------------------
+ *  SISTEMA PRINCIPAL DEL JUEGO — LÓGICA, RENDER Y MECÁNICAS
+ * ---------------------------------------------------------
+ *
+ * Este archivo controla:
+ *  - Estados globales del duelo (turnos, fases, puntos de vida)
+ *  - Administración de mazos, manos y campos
+ *  - Invocaciones con modo (ATK / DEF)
+ *  - Sistema de fusión
+ *  - Resolución de batallas respetando ATK/DEF
+ *  - Renderizado del estado del juego en el DOM
+ *  - Utilidades de animación, logs y serialización del estado
+ *
+ * El flujo principal del turno es:
+ *  1. El jugador roba carta y puede invocar o fusionar.
+ *  2. El jugador decide atacar 
+ *  3. El jugador termina el turno.
+ *  4. La IA realiza sus acciones 
+ *
+ * El diseño permite integrar un motor Minimax ,
+ * ya que el estado del juego es completamente serializable.
+ */
 
+// -----------------------------------------------------------------------------
+// Constantes del sistema
+// -----------------------------------------------------------------------------
+
+const MAX_MONSTER_SLOTS = 5;  // número máximo de espacios de monstruos en el campo
+const DEFAULT_DECK_SIZE = 20; // tamaño por defecto del mazo (máximo 40)
+const INITIAL_HAND_SIZE = 5;  // cartas iniciales en la mano
+
+// Tamaño actual del mazo 
 let currentDeckSize = DEFAULT_DECK_SIZE;
 
+// Pausa la ejecución un número de milisegundos. Usada para animaciones y turnos.
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Estado global del juego
+
+// ---------- Estado global del juego (GameState Pattern) --------------
+
+// Estado inicial del juego
 const gameState = {
   turn: 'player',           // 'player' | 'ai' | 'ended'
   phase: 'main',
@@ -16,31 +49,34 @@ const gameState = {
     life: 8000,
     deck: [],
     hand: [],
-    field: [],
+    field: new Array(MAX_MONSTER_SLOTS).fill(null), // ahora cada slot es { id, mode } o null
   },
   ai: {
     life: 8000,
     deck: [],
     hand: [],
-    field: [],
+    field: new Array(MAX_MONSTER_SLOTS).fill(null),
   },
-  fusionMode: false,
-  fusionFirstIndex: null,   // índice de la primera carta seleccionada para fusión
+  fusionMode: false,        // ¿Player está intentando fusionar?
+  fusionFirstIndex: null,   // índice de la primera carta seleccionada para fusión (mano del jugador)
 };
 
 // ---------- Utilidades generales ----------
-
-// Escribe mensajes en el panel de log
+// Agrega un mensaje al registro visual del juego.
 function logMessage(msg) {
   const log = document.getElementById('log');
   const entry = document.createElement('div');
   entry.className = 'log-entry';
   entry.textContent = msg;
-  log.appendChild(entry);
-  log.scrollTop = log.scrollHeight;
+  if (log) {
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+  } else {
+    console.log('[LOG]', msg);
+  }
 }
 
-// Baraja un array in-place (Fisher–Yates)
+// Baraja un array in-place (Fisher–Yates) sin crear copias adicionales
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -55,7 +91,7 @@ function buildDeckFromPool(size) {
   return poolCopy.slice(0, size).map((card) => card.id);
 }
 
-// Roba la primera carta del deck y la pasa a la mano
+// Roba la primera carta del deck y la pasa a la mano. Devuelve el id de la carta robada.
 function drawCard(playerKey) {
   const player = gameState[playerKey];
   if (player.deck.length === 0) return null;
@@ -64,12 +100,12 @@ function drawCard(playerKey) {
   return cardId;
 }
 
-// Devuelve el otro jugador
+// Devuelve el otro jugador: 'player' -> 'ai', 'ai' -> 'player'
 function otherPlayer(key) {
   return key === 'player' ? 'ai' : 'player';
 }
 
-// FX de daño en pantalla
+// Muestra efectos visuales de daño.
 function showDamageFX(amount) {
   const fx = document.getElementById('damage-fx');
   if (!fx) return;
@@ -78,7 +114,7 @@ function showDamageFX(amount) {
   setTimeout(() => fx.classList.remove('show'), 600);
 }
 
-// Muestra modal de fin de partida
+// Muestra el modal de fin de partida con el ganador y puntos de vida restantes.
 function showEndModal(winner) {
   const modal = document.getElementById('end-modal');
   const resultEl = document.getElementById('end-result');
@@ -92,7 +128,7 @@ function showEndModal(winner) {
   modal.classList.add('show');
 }
 
-// Construye un estado serializable para enviar al backend Python
+// Devuelve una copia serializable del estado completo del juego.
 function buildSerializableState() {
   return {
     turn: gameState.turn,
@@ -101,32 +137,47 @@ function buildSerializableState() {
       life: gameState.player.life,
       deck: gameState.player.deck.map((id) => CARD_BY_ID[id]),
       hand: gameState.player.hand.map((id) => CARD_BY_ID[id]),
-      field: gameState.player.field.map((id) => (id ? CARD_BY_ID[id] : null)),
+      field: gameState.player.field.map((slot) => (slot ? { ...CARD_BY_ID[slot.id], mode: slot.mode } : null)),
     },
     ai: {
       life: gameState.ai.life,
       deck: gameState.ai.deck.map((id) => CARD_BY_ID[id]),
       hand: gameState.ai.hand.map((id) => CARD_BY_ID[id]),
-      field: gameState.ai.field.map((id) => (id ? CARD_BY_ID[id] : null)),
+      field: gameState.ai.field.map((slot) => (slot ? { ...CARD_BY_ID[slot.id], mode: slot.mode } : null)),
     },
   };
 }
 
 // ---------- Render ----------
 
-// Crea el elemento visual de una carta
+// Crea visualmente una carta en HTML.
 function createCardElement(
-  cardId,
+  maybeCard,
   { clickable = false, onClick = null, hidden = false, size = 'normal' } = {}
 ) {
-  const card = hidden ? null : CARD_BY_ID[cardId];
+  // determinar card id y modo si se recibe un objeto
+  let cardId;
+  let slotMode = null;
+  if (!maybeCard && hidden) {
+    cardId = null;
+  } else if (typeof maybeCard === 'string') {
+    cardId = maybeCard;
+  } else if (typeof maybeCard === 'object' && maybeCard !== null) {
+    // si es un slot: { id: 'C1', mode: 'atk' }
+    cardId = maybeCard.id;
+    slotMode = maybeCard.mode;
+  } else {
+    cardId = maybeCard;
+  }
+
+  const card = cardId ? CARD_BY_ID[cardId] : null;
 
   const el = document.createElement('div');
   el.className = 'card enter';
   if (size === 'mini') el.classList.add('card-mini');
 
-  // Carta boca abajo (no usada ahora, pero útil si se quisiera ocultar)
-  if (hidden) {
+  // Carta slot vacío
+  if (hidden || !card) {
     el.style.background = 'linear-gradient(135deg, #0ea5e9, #6366f1)';
     el.style.border = '1px solid rgba(148, 163, 184, 0.8)';
     if (clickable && typeof onClick === 'function') {
@@ -168,6 +219,21 @@ function createCardElement(
   el.appendChild(imgDiv);
   el.appendChild(infoDiv);
 
+  // si la carta/slot tiene modo DEF la estilizamos
+  if (slotMode === 'def') {
+    el.classList.add('def-mode');
+    // opcional: indicamos texto pequeño de "DEF"
+    const modeBadge = document.createElement('div');
+    modeBadge.className = 'mode-badge';
+    modeBadge.textContent = 'DEF';
+    el.appendChild(modeBadge);
+  } else if (slotMode === 'atk') {
+    const modeBadge = document.createElement('div');
+    modeBadge.className = 'mode-badge atk';
+    modeBadge.textContent = 'ATK';
+    el.appendChild(modeBadge);
+  }
+
   if (clickable && typeof onClick === 'function') {
     el.addEventListener('click', onClick);
   }
@@ -175,7 +241,7 @@ function createCardElement(
   return el;
 }
 
-// Dibuja todo el estado del juego en la interfaz
+// Redibuja todo el estado visual del juego
 function render() {
   document.getElementById('player-life').textContent = `LP: ${gameState.player.life}`;
   document.getElementById('ai-life').textContent = `LP: ${gameState.ai.life}`;
@@ -196,10 +262,10 @@ function render() {
   const playerDeckPreviewDiv = document.getElementById('player-deck-preview');
   const aiDeckPreviewDiv = document.getElementById('ai-deck-preview');
 
-  playerHandDiv.innerHTML = '';
-  aiHandDiv.innerHTML = '';
-  playerFieldDiv.innerHTML = '';
-  aiFieldDiv.innerHTML = '';
+  if (playerHandDiv) playerHandDiv.innerHTML = '';
+  if (aiHandDiv) aiHandDiv.innerHTML = '';
+  if (playerFieldDiv) playerFieldDiv.innerHTML = '';
+  if (aiFieldDiv) aiFieldDiv.innerHTML = '';
   if (playerDeckPreviewDiv) playerDeckPreviewDiv.innerHTML = '';
   if (aiDeckPreviewDiv) aiDeckPreviewDiv.innerHTML = '';
 
@@ -212,39 +278,39 @@ function render() {
     if (gameState.fusionMode && gameState.fusionFirstIndex === index) {
       cardEl.classList.add('selected');
     }
-    playerHandDiv.appendChild(cardEl);
+    if (playerHandDiv) playerHandDiv.appendChild(cardEl);
   });
 
-  // Mano IA (visible, acorde al enunciado)
+  // Mano IA 
   gameState.ai.hand.forEach((cardId) => {
     const cardEl = createCardElement(cardId);
-    aiHandDiv.appendChild(cardEl);
+    if (aiHandDiv) aiHandDiv.appendChild(cardEl);
   });
 
   // Campo jugador
   for (let i = 0; i < MAX_MONSTER_SLOTS; i++) {
-    const slotCardId = gameState.player.field[i] ?? null;
+    const slotObj = gameState.player.field[i] ?? null;
     const slot = document.createElement('div');
     slot.className = 'card-slot';
-    if (slotCardId) {
+    if (slotObj) {
       slot.classList.add('has-card');
-      const cardEl = createCardElement(slotCardId);
+      const cardEl = createCardElement(slotObj);
       slot.appendChild(cardEl);
     }
-    playerFieldDiv.appendChild(slot);
+    if (playerFieldDiv) playerFieldDiv.appendChild(slot);
   }
 
   // Campo IA
   for (let i = 0; i < MAX_MONSTER_SLOTS; i++) {
-    const slotCardId = gameState.ai.field[i] ?? null;
+    const slotObj = gameState.ai.field[i] ?? null;
     const slot = document.createElement('div');
     slot.className = 'card-slot';
-    if (slotCardId) {
+    if (slotObj) {
       slot.classList.add('has-card');
-      const cardEl = createCardElement(slotCardId);
+      const cardEl = createCardElement(slotObj);
       slot.appendChild(cardEl);
     }
-    aiFieldDiv.appendChild(slot);
+    if (aiFieldDiv) aiFieldDiv.appendChild(slot);
   }
 
   // Preview de mazo jugador
@@ -273,8 +339,7 @@ function render() {
 }
 
 // ---------- Lógica de juego (acciones del jugador y resolución de batalla) ----------
-
-// Click en una carta de la mano del jugador
+// Maneja el click en una carta de la mano del jugador
 function handlePlayerHandClick(index) {
   if (gameState.turn !== 'player' || gameState.turn === 'ended') return;
 
@@ -285,17 +350,28 @@ function handlePlayerHandClick(index) {
   }
 }
 
-// Invoca una carta al primer slot vacío
-function handlePlayerPlayCard(handIndex) {
+// Invoca una carta al primer slot vacío pidiendo modo (ATK/DEF)
+async function handlePlayerPlayCard(handIndex) {
   const firstEmptyIndex = gameState.player.field.findIndex((c) => !c);
   if (firstEmptyIndex === -1) {
     logMessage('No hay espacio en el campo para más monstruos.');
     return;
   }
 
-  const [cardId] = gameState.player.hand.splice(handIndex, 1);
-  gameState.player.field[firstEmptyIndex] = cardId;
-  logMessage(`Jugador invoca ${CARD_BY_ID[cardId].name}.`);
+  const cardId = gameState.player.hand[handIndex];
+
+  // Pedir modo al jugador
+  const mode = await askBattleMode();
+  if (!mode) {
+    logMessage('Invocación cancelada.');
+    return;
+  }
+
+  // Remover de la mano y colocar en el campo con el modo escogido
+  gameState.player.hand.splice(handIndex, 1);
+  gameState.player.field[firstEmptyIndex] = { id: cardId, mode: mode };
+
+  logMessage(`Jugador invoca ${CARD_BY_ID[cardId].name} en modo ${mode.toUpperCase()}.`);
   render();
 }
 
@@ -343,22 +419,30 @@ function handleFusionClick(handIndex) {
     `Fusión exitosa: "${CARD_BY_ID[firstId].name}" + "${CARD_BY_ID[secondId].name}" → "${CARD_BY_ID[fusionResultId].name}".`
   );
 
-  //invocar automaticamente si hay espacio
+  //invocar automaticamente si hay espacio (invoca en modo ATK por defecto)
   const firstEmpty = gameState.player.field.findIndex(c => !c);
   if (firstEmpty !== -1) {
-    // sacar de la mano (último push) y poner en campo
     const idxInHand = gameState.player.hand.indexOf(fusionResultId);
     if (idxInHand !== -1) gameState.player.hand.splice(idxInHand,1);
-    gameState.player.field[firstEmpty] = fusionResultId;
-    logMessage(`Invocas inmediatamente ${CARD_BY_ID[fusionResultId].name} tras la fusión.`);
+    gameState.player.field[firstEmpty] = { id: fusionResultId, mode: 'atk' };
+    logMessage(`Invocas inmediatamente ${CARD_BY_ID[fusionResultId].name} (ATK) tras la fusión.`);
   }
 
   gameState.fusionFirstIndex = null;
   render();
 }
 
-// Resuelve la fase de batalla para 'player' o 'ai'
-async function resolveBattlePhase(attackerKey) {
+// Resuelve la fase de batalla del jugador cuando presiona ATACAR
+async function startPlayerBattle() {
+  if (gameState.turn !== 'player') return;
+  await resolveManualBattle('player');
+
+  // tras la fase de batalla, el jugador puede terminar su turno con el botón "Terminar turno"
+  render();
+}
+
+// Manera de resolver batalla respetando modos ATK/DEF
+async function resolveManualBattle(attackerKey) {
   if (gameState.turn === 'ended') return;
 
   const defenderKey = otherPlayer(attackerKey);
@@ -367,67 +451,77 @@ async function resolveBattlePhase(attackerKey) {
 
   logMessage(
     attackerKey === 'player'
-      ? 'Fase de batalla: atacan tus monstruos.'
-      : 'Fase de batalla: atacan los monstruos de la IA.'
+      ? 'Fase de batalla: atacan tus monstruos (solo los en ATK).'
+      : 'Fase de batalla: atacan los monstruos de la IA (solo los en ATK).'
   );
 
-  // Refrescamos antes de empezar
   render();
-  await sleep(400);
+  await sleep(300);
 
   for (let i = 0; i < MAX_MONSTER_SLOTS; i++) {
-    const atkId = attackerField[i];
-    if (!atkId) continue;
+    const atkSlot = attackerField[i];
+    if (!atkSlot) continue;
+    if (atkSlot.mode !== 'atk') continue; // solo atacan si están en ATK
 
-    const atkCard = CARD_BY_ID[atkId];
-    const defId = defenderField[i];
+    const atkCard = CARD_BY_ID[atkSlot.id];
+    const defSlot = defenderField[i];
 
-    if (defId) {
-      const defCard = CARD_BY_ID[defId];
+    // Si no hay monstruo defensor -> ataque directo
+    if (!defSlot) {
+      gameState[defenderKey].life -= atkCard.atk;
+      showDamageFX(atkCard.atk);
+      logMessage(`${atkCard.name} ataca directamente. ${otherPlayer(attackerKey) === 'player' ? 'Tú' : 'La IA'} recibes ${atkCard.atk} de daño.`);
+      render();
+      if (checkGameEnd()) return;
+      await sleep(300);
+      continue;
+    }
 
+    const defCard = CARD_BY_ID[defSlot.id];
+
+    if (defSlot.mode === 'def') {
+      // Ataque vs Defensa -> atk vs def
+      if (atkCard.atk > defCard.def) {
+        defenderField[i] = null;
+        logMessage(`${atkCard.name} destruye a ${defCard.name} colocado en DEF. No hay daño a LP.`);
+      } else if (atkCard.atk < defCard.def) {
+        const damage = defCard.def - atkCard.atk;
+        attackerField[i] = null;
+        gameState[attackerKey].life -= damage;
+        showDamageFX(damage);
+        logMessage(`${atkCard.name} es derrotado por la defensa de ${defCard.name}. ${attackerKey === 'player' ? 'Tú' : 'La IA'} recibes ${damage} de daño.`);
+      } else {
+        // igual
+        logMessage(`${atkCard.name} y ${defCard.name} quedan en empate contra DEF (ninguno muere si quieres; en esta implementación no se destruyen).`);
+        // Para mantener simple, no destruimos en empate contra DEF
+      }
+    } else {
+      // ATK vs ATK -> comparar ATK
       if (atkCard.atk > defCard.atk) {
         const damage = atkCard.atk - defCard.atk;
         defenderField[i] = null;
         gameState[defenderKey].life -= damage;
         showDamageFX(damage);
-        logMessage(
-          `${atkCard.name} destruye a ${defCard.name}. ${
-            defenderKey === 'player' ? 'Tú' : 'La IA'
-          } recibes ${damage} de daño.`
-        );
+        logMessage(`${atkCard.name} destruye a ${defCard.name}. ${defenderKey === 'player' ? 'Tú' : 'La IA'} recibes ${damage} de daño.`);
       } else if (atkCard.atk < defCard.atk) {
         const damage = defCard.atk - atkCard.atk;
         attackerField[i] = null;
         gameState[attackerKey].life -= damage;
         showDamageFX(damage);
-        logMessage(
-          `${atkCard.name} es destruido por ${defCard.name}. ${
-            attackerKey === 'player' ? 'Tú' : 'La IA'
-          } recibes ${damage} de daño.`
-        );
+        logMessage(`${atkCard.name} es destruido por ${defCard.name}. ${attackerKey === 'player' ? 'Tú' : 'La IA'} recibes ${damage} de daño.`);
       } else {
         attackerField[i] = null;
         defenderField[i] = null;
         logMessage(`${atkCard.name} y ${defCard.name} se destruyen mutuamente.`);
       }
-    } else {
-      gameState[defenderKey].life -= atkCard.atk;
-      showDamageFX(atkCard.atk);
-      logMessage(
-        `${atkCard.name} ataca directamente. ${
-          defenderKey === 'player' ? 'Tú' : 'La IA'
-        } recibes ${atkCard.atk} de daño.`
-      );
     }
 
     render();
     if (checkGameEnd()) return;
-
-    // Pausa corta entre cada ataque
-    await sleep(400);
+    await sleep(350);
   }
 
-  render();
+  logMessage('Fase de batalla finalizada.');
 }
 
 // Comprueba si la partida termina
@@ -452,7 +546,6 @@ function checkGameEnd() {
 
 // ---------- Flujo de turnos + IA ----------
 
-// Terminar turno y cambiar entre jugador / IA
 function endTurn() {
   if (gameState.turn === 'ended') return;
 
@@ -479,23 +572,17 @@ async function applyAIDecision(decision) {
   console.log('AI hand antes:', JSON.parse(JSON.stringify(gameState.ai.hand)));
   console.log('AI field antes:', JSON.parse(JSON.stringify(gameState.ai.field)));
 
-  // Helpers internos ---------------------------------------------------
   const normalizeId = (maybe) => {
-    // acepta "ID string" o objeto { id: 'ID', ... } o el propio CARD_BY_ID object
     if (!maybe) return null;
     if (typeof maybe === 'string') return maybe;
     if (typeof maybe === 'object') {
       if (maybe.id) return maybe.id;
-      // en caso sea el objeto en CARD_BY_ID exactamente (posiblemente)
       return maybe;
     }
     return null;
   };
 
   const removeCardFromHandOrField = (cardId) => {
-    // cardId: string id
-    // 1) mano puede contener ids o objetos {id:...}
-    // buscar por igualdad estricta (id) o por .id property
     let idx = gameState.ai.hand.findIndex(h => {
       if (!h) return false;
       if (typeof h === 'string') return h === cardId;
@@ -507,7 +594,6 @@ async function applyAIDecision(decision) {
       return { removedFrom: 'hand', removed };
     }
 
-    // 2) buscar en campo (campo puede contener ids o objetos)
     idx = gameState.ai.field.findIndex(f => {
       if (!f) return false;
       if (typeof f === 'string') return f === cardId;
@@ -524,7 +610,6 @@ async function applyAIDecision(decision) {
   };
 
   const pushResultToHandOnce = (resultId) => {
-    // evitar duplicados raros: si ya hay un resultId en mano no agregar de nuevo
     const exists = gameState.ai.hand.find(h => (typeof h === 'string' ? h === resultId : (h && h.id === resultId)));
     if (!exists) {
       gameState.ai.hand.push(resultId);
@@ -533,25 +618,28 @@ async function applyAIDecision(decision) {
     return false;
   };
 
-  // End helpers --------------------------------------------------------
+  // Heurística para elegir modo: preferir ATK si ATK >= DEF, sino DEF
+  const chooseModeFor = (cardId) => {
+    const c = CARD_BY_ID[cardId];
+    if (!c) return 'atk';
+    return (c.atk >= c.def) ? 'atk' : 'def';
+  };
 
-  // Caso 1: decision contiene fusión estructurada: decision.summon.fusion
+  // Caso fusión
   if (decision.summon && decision.summon.fusion) {
-    const fus = decision.summon.fusion; // puede venir { c1, c2, result }
+    const fus = decision.summon.fusion;
     const c1id = normalizeId(fus.c1);
     const c2id = normalizeId(fus.c2);
     const resid = normalizeId(fus.result);
 
     console.log('IA pidió fusión:', { c1id, c2id, resid });
 
-    // intentar eliminar c1 y c2 (mano o campo)
     const r1 = removeCardFromHandOrField(c1id);
     const r2 = removeCardFromHandOrField(c2id);
 
     if (!r1) console.warn('No se encontró c1 para remover:', c1id);
     if (!r2) console.warn('No se encontró c2 para remover:', c2id);
 
-    // añadir resultado a la mano (si no existe)
     const added = pushResultToHandOnce(resid);
     console.log('Result añadido a mano?', added, 'resultId:', resid);
 
@@ -559,19 +647,15 @@ async function applyAIDecision(decision) {
       `La IA fusiona "${CARD_BY_ID[c1id]?.name ?? c1id}" + "${CARD_BY_ID[c2id]?.name ?? c2id}" → "${CARD_BY_ID[resid]?.name ?? resid}".`
     );
 
-    // si además la decision pedía invocar el resultado en el mismo turno
     if (decision.summon.slot !== undefined && decision.summon.slot !== null) {
       const desiredSlot = decision.summon.slot;
-      // sacar de mano el result antes de invocar
       const idxResInHand = gameState.ai.hand.findIndex(h => (typeof h === 'string' ? h === resid : (h && h.id === resid)));
       if (idxResInHand !== -1) {
         gameState.ai.hand.splice(idxResInHand, 1);
       } else {
-        // tal vez el result estaba ya en la mano antes (no fue añadido) -> intentar invocar igualmente
         console.warn('Result no encontrado en mano al intentar invocar, pero continuamos intentando invocar.', resid);
       }
 
-      // elegir slot valido
       let targetSlot = desiredSlot;
       if (
         typeof targetSlot !== 'number' ||
@@ -582,18 +666,18 @@ async function applyAIDecision(decision) {
         targetSlot = gameState.ai.field.findIndex(c => !c);
       }
       if (targetSlot !== -1) {
-        gameState.ai.field[targetSlot] = resid;
-        logMessage(`La IA invoca ${CARD_BY_ID[resid].name}.`);
+        const mode = chooseModeFor(resid);
+        gameState.ai.field[targetSlot] = { id: resid, mode };
+        logMessage(`La IA invoca ${CARD_BY_ID[resid].name} en modo ${mode.toUpperCase()}.`);
       } else {
         logMessage('La IA intentó invocar pero no tiene espacio en el campo.');
       }
     }
   }
-  // Caso 2: decision contiene jugada simple (summon.card)
+  // Caso summon simple - invocación normal
   else if (decision.summon && decision.summon.card) {
     const cardId = normalizeId(decision.summon.card);
     const desiredSlot = decision.summon.slot;
-    // eliminar de mano (si existe) y poner en campo
     const idx = gameState.ai.hand.findIndex(h => (typeof h === 'string' ? h === cardId : (h && h.id === cardId)));
     if (idx !== -1) gameState.ai.hand.splice(idx, 1);
 
@@ -608,29 +692,25 @@ async function applyAIDecision(decision) {
     }
 
     if (targetSlot !== -1) {
-      gameState.ai.field[targetSlot] = cardId;
-      logMessage(`La IA invoca ${CARD_BY_ID[cardId].name}.`);
+      const mode = chooseModeFor(cardId);
+      gameState.ai.field[targetSlot] = { id: cardId, mode };
+      logMessage(`La IA invoca ${CARD_BY_ID[cardId].name} en modo ${mode.toUpperCase()}.`);
     } else {
       logMessage('La IA intentó invocar pero no tiene espacio en el campo.');
     }
 
-        // Pausa para que se vea la invocación de la IA
     await sleep(600);
   }
 
-  // Si la decision incluye battle_phase
   if (decision.battle_phase) {
     await sleep(600);
-    resolveBattlePhase('ai');
+    await resolveManualBattle('ai');
   }
-
 
   console.log('AI hand después:', JSON.parse(JSON.stringify(gameState.ai.hand)));
   console.log('AI field después:', JSON.parse(JSON.stringify(gameState.ai.field)));
   console.groupEnd();
 }
-
-
 
 // IA de respaldo en JS si falla el backend Python
 function fallbackLocalAIDecision() {
@@ -652,7 +732,9 @@ function fallbackLocalAIDecision() {
     });
 
     const cardId = hand[bestIdx];
-    summon = { card: cardId, slot: firstEmptyIndex };
+    // elegir modo simple: atk si atk >= def
+    const mode = CARD_BY_ID[cardId].atk >= CARD_BY_ID[cardId].def ? 'atk' : 'def';
+    summon = { card: cardId, slot: firstEmptyIndex, mode };
   }
 
   return {
@@ -714,10 +796,8 @@ async function aiTurn() {
   }
 }
 
-
 // ---------- Inicialización ----------
 
-// Crea un nuevo duelo con el tamaño de mazo indicado (15–40)
 function initGame(deckSize = null) {
   if (typeof deckSize === 'number') {
     deckSize = Math.max(15, Math.min(deckSize, 40));
@@ -725,7 +805,7 @@ function initGame(deckSize = null) {
   } else {
     deckSize = currentDeckSize;
   }
-  
+
   gameState.turn = 'player';
   gameState.phase = 'main';
   gameState.player.life = 8000;
@@ -756,6 +836,49 @@ function initGame(deckSize = null) {
   render();
 }
 
+// ---------- Modal y UI relacionados ----------
+
+// askBattleMode muestra un modal (HTML abajo) y devuelve 'atk' o 'def' (o null si cancel)
+function askBattleMode() {
+  return new Promise((resolve) => {
+    const modal = document.getElementById("mode-modal");
+    if (!modal) {
+      // si no existe el modal, asumimos ATK por defecto
+      resolve('atk');
+      return;
+    }
+    modal.classList.add("show");
+
+    const btnAtk = document.getElementById("mode-atk");
+    const btnDef = document.getElementById("mode-def");
+    const btnCancel = document.getElementById("mode-cancel");
+
+    const cleanup = () => {
+      modal.classList.remove("show");
+      btnAtk.onclick = null;
+      btnDef.onclick = null;
+      if (btnCancel) btnCancel.onclick = null;
+    };
+
+    btnAtk.onclick = () => {
+      cleanup();
+      resolve('atk');
+    };
+
+    btnDef.onclick = () => {
+      cleanup();
+      resolve('def');
+    };
+
+    if (btnCancel) {
+      btnCancel.onclick = () => {
+        cleanup();
+        resolve(null);
+      };
+    }
+  });
+}
+
 // ---------- Listeners de UI ----------
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -765,8 +888,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const startGameBtn = document.getElementById('btn-start-game');
   const deckSizeInput = document.getElementById('deck-size-input');
   const fusionToggleBtn = document.getElementById('btn-toggle-fusion');
-  
-  // Configurar tamaño de mazo e iniciar duelo
+  const battleBtn = document.getElementById('btn-battle');
+
   if (startGameBtn && deckSizeInput) {
     startGameBtn.addEventListener('click', () => {
       let val = parseInt(deckSizeInput.value, 10);
@@ -781,20 +904,20 @@ document.addEventListener('DOMContentLoaded', () => {
     endTurnBtn.addEventListener('click', endTurn);
   }
 
-  // Corrección para el botón "Jugar otra vez"
+  if (battleBtn) {
+    battleBtn.addEventListener('click', startPlayerBattle);
+  }
+
   if (playAgainBtn) {
     playAgainBtn.addEventListener('click', () => {
-      // 1. Obtener el tamaño del mazo (lógica existente)
       let val = DEFAULT_DECK_SIZE;
       if (deckSizeInput) {
         const parsed = parseInt(deckSizeInput.value, 10);
         if (!isNaN(parsed)) val = Math.max(15, Math.min(parsed, 40));
       }
-      
-      // 2. Reiniciar el juego
+
       initGame(val);
 
-      // 3. OCULTAR EL MODAL DE FIN DE PARTIDA
       const endModal = document.getElementById('game-end-modal');
       if (endModal) {
         endModal.classList.remove('show');
@@ -802,10 +925,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-// BOTÓN SALIR (Vuelve a la página principal del menú)
   if (exitBtn) {
     exitBtn.addEventListener('click', () => {
-      // Redirige a la página principal del menú
       window.location.href = 'index.html';
     });
   }
@@ -814,11 +935,13 @@ document.addEventListener('DOMContentLoaded', () => {
     fusionToggleBtn.addEventListener('click', () => {
       gameState.fusionMode = !gameState.fusionMode;
       fusionToggleBtn.textContent = `Modo Fusión: ${gameState.fusionMode ? 'ON' : 'OFF'}`;
-      // cancelar selección si apaga modo fusión
       if (!gameState.fusionMode) {
         gameState.fusionFirstIndex = null;
       }
       render();
     });
-  }  
+  }
+
+  // iniciar con valores por defecto si hay botón start automático
+  render();
 });

@@ -1,5 +1,3 @@
-// js/fusiones.js
-
 // Reglas de fusión (la lista que proporcionaste)
 const FUSION_RULES = window.FUSION_RULES || [
    // 1) Mago del Tiempo + Bebé Dragón → Dragón Milenario

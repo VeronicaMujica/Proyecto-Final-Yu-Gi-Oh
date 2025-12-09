@@ -77,7 +77,6 @@
           <h3>Acciones</h3>
           <button id="btn-end-turn" class="btn">Terminar turno</button>
           <button id="btn-toggle-fusion" class="btn btn-secondary">Modo Fusión: OFF</button>
-          
         </div>
 
         <div class="panel">
@@ -162,6 +161,7 @@
     </div>
   </div>
 
+  <!-- Modal de fusiones -->
   <div id="fusion-modal" class="modal">
     <div class="modal-content" style="max-width: 520px; text-align: left;">
       <h2 style="margin-bottom:6px;">Guía de Fusiones</h2>
@@ -232,22 +232,67 @@
       const closeFusionBtn = document.getElementById('btn-close-fusions');
 
       if (openFusionBtn && fusionModal && closeFusionBtn) {
-        openFusionBtn.addEventListener('click', () => {
-          fusionModal.classList.add('show');
-        });
+        openFusionBtn.addEventListener('click', () => fusionModal.classList.add('show'));
+        closeFusionBtn.addEventListener('click', () => fusionModal.classList.remove('show'));
 
-        closeFusionBtn.addEventListener('click', () => {
-          fusionModal.classList.remove('show');
-        });
-
-        // Cerrar clicando fuera de la tarjeta
+        // Cerrar clicando fuera
         fusionModal.addEventListener('click', (e) => {
-          if (e.target === fusionModal) {
-            fusionModal.classList.remove('show');
-          }
+          if (e.target === fusionModal) fusionModal.classList.remove('show');
         });
       }
     });
+  </script>
+
+
+  <!-- ===================================================== -->
+  <!--         MODAL DE MODO DE INVOCACIÓN (ATK / DEF)       -->
+  <!-- ===================================================== -->
+
+  <div id="mode-modal" class="modal">
+    <div class="modal-content" style="max-width: 350px; text-align:center;">
+      <h2 style="margin-bottom:10px;">Selecciona Modo</h2>
+      <p style="margin-bottom:12px;">¿Cómo quieres invocar esta carta?</p>
+
+      <div class="modal-actions" style="display:flex; gap:10px; justify-content:center;">
+        <button id="btn-mode-atk" class="btn">Modo Ataque</button>
+        <button id="btn-mode-def" class="btn btn-secondary">Modo Defensa</button>
+      </div>
+
+      <div style="margin-top:18px;">
+        <button id="btn-mode-cancel" class="btn btn-secondary" style="width:100%;">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function askBattleMode() {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('mode-modal');
+        const btnATK = document.getElementById('btn-mode-atk');
+        const btnDEF = document.getElementById('btn-mode-def');
+        const btnCancel = document.getElementById('btn-mode-cancel');
+
+        modal.classList.add('show');
+
+        const chooseATK = () => close("atk");
+        const chooseDEF = () => close("def");
+        const chooseCancel = () => close(null);
+
+        function close(result) {
+          modal.classList.remove('show');
+          btnATK.removeEventListener("click", chooseATK);
+          btnDEF.removeEventListener("click", chooseDEF);
+          btnCancel.removeEventListener("click", chooseCancel);
+          resolve(result);
+        }
+
+        btnATK.addEventListener("click", chooseATK);
+        btnDEF.addEventListener("click", chooseDEF);
+        btnCancel.addEventListener("click", chooseCancel);
+      });
+    }
   </script>
 
 </body>

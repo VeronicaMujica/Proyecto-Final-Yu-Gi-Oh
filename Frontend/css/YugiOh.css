@@ -461,3 +461,8 @@ body {
 .modal-actions .btn {
   flex: 1;
 }
+
+.def-mode {
+  border: 3px solid #3b82f6;
+  transform: rotate(90deg);
+}
