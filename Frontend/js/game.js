@@ -781,29 +781,32 @@ document.addEventListener('DOMContentLoaded', () => {
     endTurnBtn.addEventListener('click', endTurn);
   }
 
+  // Corrección para el botón "Jugar otra vez"
   if (playAgainBtn) {
     playAgainBtn.addEventListener('click', () => {
+      // 1. Obtener el tamaño del mazo (lógica existente)
       let val = DEFAULT_DECK_SIZE;
       if (deckSizeInput) {
         const parsed = parseInt(deckSizeInput.value, 10);
         if (!isNaN(parsed)) val = Math.max(15, Math.min(parsed, 40));
       }
+      
+      // 2. Reiniciar el juego
       initGame(val);
+
+      // 3. OCULTAR EL MODAL DE FIN DE PARTIDA
+      const endModal = document.getElementById('game-end-modal');
+      if (endModal) {
+        endModal.classList.remove('show');
+      }
     });
   }
 
+// BOTÓN SALIR (Vuelve a la página principal del menú)
   if (exitBtn) {
     exitBtn.addEventListener('click', () => {
-      const app = document.querySelector('.app');
-      if (app) app.style.display = 'none';
-
-      const msg = document.createElement('div');
-      msg.style.color = '#e5e7eb';
-      msg.style.fontSize = '1.2rem';
-      msg.style.margin = '2rem auto';
-      msg.style.textAlign = 'center';
-      msg.textContent = 'Gracias por jugar. Puedes cerrar la pestaña.';
-      document.body.appendChild(msg);
+      // Redirige a la página principal del menú
+      window.location.href = 'index.html';
     });
   }
 

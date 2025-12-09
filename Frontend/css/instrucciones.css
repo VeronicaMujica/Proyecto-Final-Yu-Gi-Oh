@@ -111,3 +111,28 @@ ul, ol {
   margin: 10px 0 15px 0;
   border: 1px solid rgba(255,255,255,0.08);
 }
+
+.side-art {
+  position: fixed; /* Mantiene la imagen en su lugar al hacer scroll */
+  width: 350px; /* Tamaño de la imagen (ajusta a tu gusto) */
+  opacity: 0.2; /* Nivel de transparencia (para que no distraiga del contenido) */
+  z-index: -1; /* Envía la imagen detrás de todo el contenido */
+  pointer-events: none; /* Ignora clics e interacciones */
+  user-select: none;
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.7));
+  transition: opacity 0.3s ease;
+}
+
+/* Posición y ajustes para la imagen izquierda */
+.left-art {
+  bottom: 0; /* Lo fija en la parte inferior */
+  left: 0; /* Lo fija en la parte izquierda */
+  transform: translateX(-50px) translateY(50px); /* Ajuste visual fuera de la pantalla */
+}
+
+/* Posición y ajustes para la imagen derecha */
+.right-art {
+  top: 0; /* Lo fija en la parte superior */
+  right: 0; /* Lo fija en la parte derecha */
+  transform: translateX(50px) translateY(-50px); /* Ajuste visual fuera de la pantalla */
+}

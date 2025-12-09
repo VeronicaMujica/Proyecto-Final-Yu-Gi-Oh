@@ -1,3 +1,10 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
 /* Fondo */
 body {
   margin: 0;
@@ -56,23 +63,80 @@ body {
               inset 0 0 12px rgba(255, 215, 0, 0.08);
   backdrop-filter: blur(6px);
   transition: transform 0.15s ease;
+  /* Altura mínima para mejor consistencia en el grid */
+  min-height: 250px; 
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .fusion-card:hover {
   transform: scale(1.04);
 }
 
-/* Inputs */
-.inputs span {
-  display: block;
-  font-size: 0.95rem;
-  padding: 4px;
-  background: rgba(56, 189, 248, 0.17);
-  border-radius: 6px;
-  margin-bottom: 4px;
+/* Estilos para TODAS las imágenes de carta */
+.card-img {
+  width: 65px; 
+  height: auto;
+  border-radius: 8px;
+  border: 2px solid #fbbf24; 
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
 }
 
-/* Flecha */
+/* Contenedor de las cartas de entrada */
+.inputs-container {
+  display: flex;
+  justify-content: center;
+  align-items: center; /* ¡IMPORTANTE! Cambiado a 'center' para centrar el + con las imágenes */
+  gap: 10px; /* Reducir o eliminar el 'gap' para mejor control con el '+' */
+  margin-bottom: 10px;
+}
+
+/* Nuevo contenedor para el nombre y la imagen */
+.input-card-wrapper {
+    display: flex;
+    flex-direction: column; /* Apila el nombre y la imagen verticalmente */
+    align-items: center;
+    gap: 5px; /* Pequeño espacio entre el nombre y la imagen */
+}
+
+/* Estilo para el nombre de la carta */
+.card-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fde68a;
+    display: block;
+    max-width: 70px; /* Limita el ancho para que el texto se envuelva */
+    line-height: 1.1;
+    height: 3em; /* Fija la altura para evitar que las cartas salten si el nombre ocupa dos líneas */
+    display: flex;
+    align-items: center; /* Centra verticalmente el nombre */
+    justify-content: center;
+    text-align: center;
+}
+
+/* Estilo para el operador '+' (la suma) */
+.fusion-operator {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fbbf24;
+    margin: 0 5px; /* Espacio horizontal alrededor del + */
+    /* Ajuste vertical para que esté perfectamente centrado con las imágenes */
+    transform: translateY(-8px); 
+    height: 65px; /* Mismo alto que la imagen para alineación */
+    display: flex;
+    align-items: center;
+}
+
+/* Quitar estilos antiguos de texto de input */
+.inputs {
+  display: none;
+}
+.inputs span {
+  display: none;
+}
+
+/* Flecha de fusión */
 .arrow {
   font-size: 1.8rem;
   margin: 8px 0;
@@ -89,6 +153,22 @@ body {
   color: #fde68a;
   border: 1px solid rgba(251, 191, 36, 0.25);
 }
+
+/* Estilo para la imagen dentro del resultado */
+.result .card-img {
+    /* ¡AJUSTE CLAVE! Tamaño un poco más grande para la carta resultante (80px) */
+    width: 80px; 
+    margin: 5px 0;
+}
+
+/* Estilo para el texto de regla genérica */
+.fusion-card .result .generic-rule {
+    display: block; 
+    font-size: 0.85em; 
+    margin-top: 5px;
+    color: #9ca3af; /* Un color más sutil */
+}
+
 
 /* Botón */
 .btn {
@@ -108,4 +188,30 @@ body {
 .btn:hover {
   transform: scale(1.08);
   box-shadow: 0 0 30px rgba(255, 170, 0, 0.6);
+}
+
+/* Estilos para las imágenes decorativas laterales */
+.side-art {
+  position: fixed; /* Mantiene la imagen en su lugar al hacer scroll */
+  width: 350px; /* Tamaño de la imagen (ajusta a tu gusto) */
+  opacity: 0.2; /* Nivel de transparencia (para que no distraiga del contenido) */
+  z-index: -1; /* Envía la imagen detrás de todo el contenido */
+  pointer-events: none; /* Ignora clics e interacciones */
+  user-select: none;
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.7));
+  transition: opacity 0.3s ease;
+}
+
+/* Posición y ajustes para la imagen izquierda */
+.left-art {
+  bottom: 0; /* Lo fija en la parte inferior */
+  left: 0; /* Lo fija en la parte izquierda */
+  transform: translateX(-50px) translateY(50px); /* Ajuste visual fuera de la pantalla */
+}
+
+/* Posición y ajustes para la imagen derecha */
+.right-art {
+  top: 0; /* Lo fija en la parte superior */
+  right: 0; /* Lo fija en la parte derecha */
+  transform: translateX(50px) translateY(-50px); /* Ajuste visual fuera de la pantalla */
 }
