@@ -1,4 +1,4 @@
-const IMG_BASE = 'https://images.ygoprodeck.com/images/cards/';
+window.IMG_BASE = window.IMG_BASE || 'https://images.ygoprodeck.com/images/cards/';
 
 // Modelo de carta:
 // {
@@ -11,7 +11,7 @@ const IMG_BASE = 'https://images.ygoprodeck.com/images/cards/';
 //   image: IMG_BASE + '89631139.jpg'
 // }
 
-const CARD_POOL = [
+window.CARD_POOL = window.CARD_POOL || [
   {
     id: 'DRAGON_BLANCO_DE_OJOS_AZULES',
     name: 'Dragón Blanco de Ojos Azules',
@@ -715,14 +715,15 @@ const CARD_POOL = [
   }
 ];
 
-// Mapa rápido id -> carta
-const CARD_BY_ID = {};
-for (const c of CARD_POOL) {
-  CARD_BY_ID[c.id] = c;
+
+window.CARD_BY_ID = window.CARD_BY_ID || {};
+for (const c of window.CARD_POOL) {
+  window.CARD_BY_ID[c.id] = c;
 }
 
+
 // Fusiones (usando solo cartas de CARD_POOL)
-const FUSION_RULES = [
+window.FUSION_RULES = window.FUSION_RULES || [
   // 1) Bebé Dragón + Mago del Tiempo → Dragón Milenario
   {
     inputs: ['BEBE_DRAGON', 'MAGO_DEL_TIEMPO'],

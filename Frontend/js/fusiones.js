@@ -1,7 +1,7 @@
 // js/fusiones.js
 
 // Reglas de fusión (la lista que proporcionaste)
-const FUSION_RULES = [
+const FUSION_RULES = window.FUSION_RULES || [
     // 1) Bebé Dragón + Mago del Tiempo → Dragón Milenario
     { inputs: ['BEBE_DRAGON', 'MAGO_DEL_TIEMPO'], result: 'DRAGON_MILENARIO' },
 
@@ -46,10 +46,10 @@ const FUSION_RULES = [
 
 // Mapea el CARD_POOL (cargado desde cards.js) para búsqueda rápida.
 // Asume que CARD_POOL es una variable global definida en cards.js
-const CARD_MAP = window.CARD_POOL ? window.CARD_POOL.reduce((map, card) => {
-    map[card.id] = card;
-    return map;
-}, {}) : {};
+const CARD_MAP = (window.CARD_POOL || []).reduce((map, card) => {
+  map[card.id] = card;
+  return map;
+}, {});
 
 
 function getCardDetails(id) {
